@@ -3,7 +3,7 @@ export interface Breadcrumb {
   path: string;
 }
 
-export function normalizeDocumentPath(path: string): string {
+function normalizeDocumentPath(path: string): string {
   return path.replace(/^\/+/, "");
 }
 

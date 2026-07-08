@@ -5,7 +5,9 @@ import {
   displayDocumentPath,
   documentHrefForPath,
   documentPathFromLocation,
+  hasExternalIntent,
   internalDocumentPathForLink,
+  isPlainPrimaryClick,
   parentPathFor,
 } from "./routing";
 
@@ -81,5 +83,71 @@ describe("rendered link classification", () => {
     ["blob:http://preview.local/asset"],
   ])("does not intercept %j", (href) => {
     expect(internalDocumentPathForLink(href, currentURL)).toBeNull();
+  });
+});
+
+describe("isPlainPrimaryClick", () => {
+  const plainClick = {
+    button: 0,
+    altKey: false,
+    ctrlKey: false,
+    metaKey: false,
+    shiftKey: false,
+  } as MouseEvent;
+
+  it("returns true for a plain left-button click without modifiers", () => {
+    expect(isPlainPrimaryClick(plainClick)).toBe(true);
+  });
+
+  it("returns false when the button is not the primary button", () => {
+    expect(isPlainPrimaryClick({ ...plainClick, button: 1 } as MouseEvent)).toBe(
+      false,
+    );
+  });
+
+  it.each([
+    ["altKey", { ...plainClick, altKey: true } as MouseEvent],
+    ["ctrlKey", { ...plainClick, ctrlKey: true } as MouseEvent],
+    ["metaKey", { ...plainClick, metaKey: true } as MouseEvent],
+    ["shiftKey", { ...plainClick, shiftKey: true } as MouseEvent],
+  ])("returns false when %s modifier is held", (_name, event) => {
+    expect(isPlainPrimaryClick(event)).toBe(false);
+  });
+});
+
+describe("hasExternalIntent", () => {
+  it("returns false for a plain internal anchor", () => {
+    const anchor = document.createElement("a");
+    anchor.href = "/docs/readme.md";
+    expect(hasExternalIntent(anchor)).toBe(false);
+  });
+
+  it("returns true when the download attribute is present", () => {
+    const anchor = document.createElement("a");
+    anchor.setAttribute("download", "");
+    expect(hasExternalIntent(anchor)).toBe(true);
+  });
+
+  it("returns true when target is _blank", () => {
+    const anchor = document.createElement("a");
+    anchor.setAttribute("target", "_blank");
+    expect(hasExternalIntent(anchor)).toBe(true);
+  });
+
+  it("returns false when target is _self", () => {
+    const anchor = document.createElement("a");
+    anchor.setAttribute("target", "_self");
+    expect(hasExternalIntent(anchor)).toBe(false);
+  });
+
+  it("returns false when target is empty", () => {
+    const anchor = document.createElement("a");
+    anchor.setAttribute("target", "");
+    expect(hasExternalIntent(anchor)).toBe(false);
+  });
+
+  it("returns false when target is absent", () => {
+    const anchor = document.createElement("a");
+    expect(hasExternalIntent(anchor)).toBe(false);
   });
 });
