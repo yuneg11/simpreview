@@ -1,6 +1,6 @@
 version: 2
 
-project_name: preview
+project_name: simpreview
 
 # Build the frontend once; the Go binary then embeds backend/internal/assets/web.
 before:
@@ -8,10 +8,10 @@ before:
     - sh -c "cd frontend && npm ci && npm run build"
 
 builds:
-  - id: preview
+  - id: simpreview
     dir: backend
-    main: ./cmd/preview
-    binary: preview
+    main: ./cmd/simpreview
+    binary: simpreview
     env:
       - CGO_ENABLED=0
     flags:
@@ -27,8 +27,8 @@ builds:
       - arm64
 
 archives:
-  - id: preview
-    name_template: "preview_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+  - id: simpreview
+    name_template: "simpreview_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
     formats: [tar.gz]
     format_overrides:
       - goos: windows

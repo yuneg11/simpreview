@@ -44,4 +44,4 @@ jobs:
 
       - name: Build binary (embeds the frontend)
         working-directory: backend
-        run: go build -buildvcs=false -o /tmp/preview ./cmd/preview
+        run: go build -buildvcs=false -o /tmp/simpreview ./cmd/simpreview

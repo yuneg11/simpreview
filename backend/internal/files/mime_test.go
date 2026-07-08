@@ -23,7 +23,7 @@ func TestDetectRenderMode(t *testing.T) {
 		{name: "script.js", sample: []byte("console.log('x');\n"), wantMode: RenderModeSource, wantMIME: "text/javascript"},
 		// Regression: ".mod" maps to audio/x-mod in the system mime database, but
 		// go.mod is plain text and must not be classified as binary.
-		{name: "go.mod", sample: []byte("module preview/backend\n\ngo 1.22\n"), wantMode: RenderModeText, wantMIME: "text/plain"},
+		{name: "go.mod", sample: []byte("module simpreview/backend\n\ngo 1.22\n"), wantMode: RenderModeText, wantMIME: "text/plain"},
 		// Extension-less text file: classified as text from its content.
 		{name: "Dockerfile", sample: []byte("FROM alpine:3\nRUN echo hi\n"), wantMode: RenderModeText, wantMIME: "text/plain"},
 		// Binary content under an unknown extension: NUL byte marks it binary.

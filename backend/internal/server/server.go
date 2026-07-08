@@ -10,7 +10,7 @@ import (
 	"strconv"
 	"strings"
 
-	"preview/backend/internal/files"
+	"simpreview/backend/internal/files"
 )
 
 type Options struct {

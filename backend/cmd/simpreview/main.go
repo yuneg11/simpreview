@@ -7,10 +7,10 @@ import (
 	"net/http"
 	"os"
 
-	"preview/backend/internal/assets"
-	"preview/backend/internal/config"
-	"preview/backend/internal/files"
-	"preview/backend/internal/server"
+	"simpreview/backend/internal/assets"
+	"simpreview/backend/internal/config"
+	"simpreview/backend/internal/files"
+	"simpreview/backend/internal/server"
 )
 
 func main() {

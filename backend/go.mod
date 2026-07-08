@@ -1,3 +1,3 @@
-module preview/backend
+module simpreview/backend
 
 go 1.22

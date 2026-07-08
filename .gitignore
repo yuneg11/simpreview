@@ -1,6 +1,6 @@
 docs/superpowers/**
 
-backend/preview
+backend/simpreview
 frontend/node_modules/
 frontend/dist/
 

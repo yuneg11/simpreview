@@ -92,7 +92,7 @@ func ParseArgs(args []string) (Config, error) {
 	var maxPreviewSize string
 	var maxRawFileSize string
 
-	flags := flag.NewFlagSet("preview", flag.ContinueOnError)
+	flags := flag.NewFlagSet("simpreview", flag.ContinueOnError)
 	flags.SetOutput(io.Discard)
 	flags.StringVar(&cfg.Root, "root", cfg.Root, "root directory to preview")
 	flags.StringVar(&cfg.Addr, "addr", cfg.Addr, "address to listen on")

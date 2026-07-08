@@ -1,16 +1,15 @@
-# web-preview
+# simpreview
 
 A read-only, single-binary web app for browsing local files from your browser —
 a GitHub-style file view for any directory. Rendered Markdown, syntax-highlighted
 code, inline image previews, and a live file tree, with **no Git features and no
 write access**.
 
-<!-- Replace OWNER/REPO with your GitHub path (e.g. eg-yun/web-preview). -->
-[![CI](https://github.com/OWNER/REPO/actions/workflows/ci.yml/badge.svg)](https://github.com/OWNER/REPO/actions/workflows/ci.yml)
-[![Release](https://img.shields.io/github/v/release/OWNER/REPO)](https://github.com/OWNER/REPO/releases/latest)
+[![CI](https://github.com/yuneg11/simpreview/actions/workflows/ci.yml/badge.svg)](https://github.com/yuneg11/simpreview/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/yuneg11/simpreview)](https://github.com/yuneg11/simpreview/releases/latest)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-![web-preview browsing a project](docs/screenshot.png)
+![simpreview browsing a project](docs/screenshot.png)
 
 ## Features
 
@@ -26,22 +25,22 @@ write access**.
 ## Install
 
 **Download a release** (recommended): grab the archive for your OS/arch from the
-[latest release](https://github.com/OWNER/REPO/releases/latest), extract it, and
-put the `preview` binary on your `PATH`.
+[latest release](https://github.com/yuneg11/simpreview/releases/latest), extract it, and
+put the `simpreview` binary on your `PATH`.
 
 **Build from source** (requires Go 1.22+, Node 20+, and [Task](https://taskfile.dev)):
 
 ```sh
-git clone https://github.com/OWNER/REPO.git web-preview
-cd web-preview
+git clone https://github.com/yuneg11/simpreview.git
+cd simpreview
 task build
-./backend/preview --root .
+./backend/simpreview --root .
 ```
 
 ## Usage
 
 ```sh
-preview --root /path/to/dir
+simpreview --root /path/to/dir
 # then open http://127.0.0.1:8080
 ```
 
@@ -87,7 +86,7 @@ reads them.
 
 ```text
 backend/             Go server (single binary)
-  cmd/preview/        CLI entry point
+  cmd/simpreview/           CLI entry point
   internal/config/    CLI flags
   internal/files/     path policy, MIME + render-mode detection, file reads
   internal/server/    HTTP handlers

@@ -13,7 +13,7 @@ import (
 	"testing"
 	"testing/fstest"
 
-	"preview/backend/internal/files"
+	"simpreview/backend/internal/files"
 )
 
 func TestAPIReturnsDirectoryJSONForRoot(t *testing.T) {

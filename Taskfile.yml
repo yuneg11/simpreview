@@ -1,4 +1,4 @@
-# Task runner for web-preview.
+# Task runner for simpreview.
 # Install Task: https://taskfile.dev/installation  (e.g. `go install github.com/go-task/task/v3/cmd/task@latest`)
 # Run `task` or `task --list` to see available tasks.
 version: "3"
@@ -50,20 +50,20 @@ tasks:
     desc: Build the Go binary (embeds the current web/ output)
     dir: backend
     cmds:
-      - go build -buildvcs=false -o preview ./cmd/preview
+      - go build -buildvcs=false -o simpreview ./cmd/simpreview
 
   serve:
     desc: "Build then run the server (default root = repo root; override: task serve -- --root /path)"
     deps: [build]
     dir: backend
     cmds:
-      - ./preview {{.CLI_ARGS | default "--root .. --addr 127.0.0.1:8080"}}
+      - ./simpreview {{.CLI_ARGS | default "--root .. --addr 127.0.0.1:8080"}}
 
   dev-backend:
     desc: Run the Go server in dev mode against ../docs
     dir: backend
     cmds:
-      - go run ./cmd/preview --root ../docs --addr 127.0.0.1:8080 --dev
+      - go run ./cmd/simpreview --root ../docs --addr 127.0.0.1:8080 --dev
 
   dev-frontend:
     desc: Run the Vite dev server (proxies /-/api and /-/raw to the backend)
