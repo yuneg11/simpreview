@@ -105,6 +105,7 @@ function TreeFile({
         data-doc-path={entry.path}
         aria-current={active ? "page" : undefined}
       >
+        <span class="tree-spacer" aria-hidden="true" />
         <FileIcon class="tree-icon" />
         <span class="tree-label">{entry.name}</span>
       </a>

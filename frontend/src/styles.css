@@ -126,6 +126,12 @@ body {
   flex: none;
 }
 
+/* Empty chevron-width slot on file rows so file icons align with folder icons. */
+.tree-spacer {
+  width: 16px;
+  flex: none;
+}
+
 .tree-label {
   overflow: hidden;
   text-overflow: ellipsis;
