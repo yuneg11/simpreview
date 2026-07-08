@@ -1,0 +1,49 @@
+version: 2
+
+project_name: preview
+
+# Build the frontend once; the Go binary then embeds backend/internal/assets/web.
+before:
+  hooks:
+    - sh -c "cd frontend && npm ci && npm run build"
+
+builds:
+  - id: preview
+    dir: backend
+    main: ./cmd/preview
+    binary: preview
+    env:
+      - CGO_ENABLED=0
+    flags:
+      - -buildvcs=false
+    ldflags:
+      - -s -w
+    goos:
+      - linux
+      - darwin
+      - windows
+    goarch:
+      - amd64
+      - arm64
+
+archives:
+  - id: preview
+    name_template: "preview_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    formats: [tar.gz]
+    format_overrides:
+      - goos: windows
+        formats: [zip]
+
+checksum:
+  name_template: "checksums.txt"
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - "^docs:"
+      - "^chore:"
+      - "^test:"
+
+release:
+  draft: false

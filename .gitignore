@@ -6,7 +6,10 @@ frontend/dist/
 
 # Generated frontend build output embedded by the Go binary.
 # The minimal fallback web/index.html stays tracked so `go build` works on a
-# fresh clone; the built bundles are produced by `make build-frontend`.
+# fresh clone; the built bundles are produced by `task build-frontend`.
 backend/internal/assets/web/assets/
+
+# GoReleaser output.
+/dist/
 
 *.log
