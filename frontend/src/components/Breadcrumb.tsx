@@ -1,14 +1,9 @@
-import { breadcrumbsForPath, displayDocumentPath, documentHrefForPath } from "../routing";
-import { CopyIcon } from "../icons";
+import { breadcrumbsForPath, documentHrefForPath } from "../routing";
 
 export function Breadcrumb({ path }: { path: string }) {
   const crumbs = breadcrumbsForPath(path);
   const lead = crumbs.slice(0, -1);
   const current = crumbs[crumbs.length - 1];
-
-  function copyPath() {
-    void navigator.clipboard?.writeText(displayDocumentPath(path));
-  }
 
   return (
     <nav class="breadcrumb" aria-label="Path">
@@ -41,9 +36,6 @@ export function Breadcrumb({ path }: { path: string }) {
           {current.label}
         </a>
       </span>
-      <button type="button" class="copy-path" title="Copy path" onClick={copyPath}>
-        <CopyIcon />
-      </button>
     </nav>
   );
 }

@@ -13,9 +13,4 @@ describe("Breadcrumb", () => {
     expect(links[3].getAttribute("data-doc-path")).toBe("docs/guides/readme.md");
     expect(links[3].getAttribute("href")).toBe("/docs/guides/readme.md");
   });
-
-  it("renders a copy-path button", () => {
-    const { container } = render(<Breadcrumb path="docs" />);
-    expect(container.querySelector(".copy-path")).not.toBeNull();
-  });
 });

@@ -261,21 +261,6 @@ body {
   font-weight: 600;
 }
 
-.copy-path {
-  margin-left: 8px;
-  flex: none;
-  border: 0;
-  background: none;
-  color: var(--fg-muted);
-  cursor: pointer;
-  padding: 2px;
-  border-radius: 6px;
-}
-
-.copy-path:hover {
-  background: var(--neutral-hover);
-}
-
 /* Directory view ----------------------------------------------------------- */
 .notice {
   padding: 8px 16px;
