@@ -1,0 +1,77 @@
+# Task runner for web-preview.
+# Install Task: https://taskfile.dev/installation  (e.g. `go install github.com/go-task/task/v3/cmd/task@latest`)
+# Run `task` or `task --list` to see available tasks.
+version: "3"
+
+tasks:
+  default:
+    desc: List available tasks
+    cmds:
+      - task --list
+    silent: true
+
+  test:
+    desc: Run all tests (backend + frontend)
+    cmds:
+      - task: test-backend
+      - task: test-frontend
+
+  test-backend:
+    desc: Run the Go tests
+    dir: backend
+    cmds:
+      - go test ./...
+
+  test-frontend:
+    desc: Run the frontend tests
+    dir: frontend
+    cmds:
+      - npm test -- --run
+
+  typecheck:
+    desc: Type-check the frontend
+    dir: frontend
+    cmds:
+      - npm run typecheck
+
+  build:
+    desc: Build the frontend and embed it into the Go binary
+    cmds:
+      - task: build-frontend
+      - task: build-backend
+
+  build-frontend:
+    desc: Build the frontend into backend/internal/assets/web
+    dir: frontend
+    cmds:
+      - npm run build
+
+  build-backend:
+    desc: Build the Go binary (embeds the current web/ output)
+    dir: backend
+    cmds:
+      - go build -buildvcs=false -o preview ./cmd/preview
+
+  serve:
+    desc: "Build then run the server (default root = repo root; override: task serve -- --root /path)"
+    deps: [build]
+    dir: backend
+    cmds:
+      - ./preview {{.CLI_ARGS | default "--root .. --addr 127.0.0.1:8080"}}
+
+  dev-backend:
+    desc: Run the Go server in dev mode against ../docs
+    dir: backend
+    cmds:
+      - go run ./cmd/preview --root ../docs --addr 127.0.0.1:8080 --dev
+
+  dev-frontend:
+    desc: Run the Vite dev server (proxies /-/api and /-/raw to the backend)
+    dir: frontend
+    cmds:
+      - npm run dev
+
+  restore-web:
+    desc: Restore the tracked minimal web/index.html after a build (keeps git clean)
+    cmds:
+      - git checkout -- backend/internal/assets/web/index.html

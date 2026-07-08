@@ -30,22 +30,21 @@ root supplied at runtime.
 - `frontend/src/` — components, `state.ts` (signals store), `routing.ts`,
   `format.ts`, `render.ts` (markdown/highlight pipeline), `api.ts` (data client).
 
-## Commands (see `Makefile`)
+## Commands (see `Taskfile.yml`; install Task from https://taskfile.dev)
 
-- Test: `make test` — or `cd backend && go test ./...` and
-  `cd frontend && npm test -- --run`.
-- Typecheck: `cd frontend && npm run typecheck`.
-- Build: `make build` — the frontend build writes to
+- List tasks: `task` or `task --list`.
+- Test: `task test` (or `task test-backend` / `task test-frontend`).
+- Typecheck: `task typecheck`.
+- Build: `task build` — the frontend build writes to
   `backend/internal/assets/web/`, then the Go binary embeds it.
-- Run the real app: `make build`, then
-  `cd backend && ./preview --root <dir> --addr 127.0.0.1:8080`.
-- Dev (two processes): `make dev-backend` + `make dev-frontend`; Vite proxies
+- Run the real app: `task serve` (add `-- --root <dir>` to override the default
+  root), or `task build` then `cd backend && ./preview --root <dir>`.
+- Dev (two processes): `task dev-backend` + `task dev-frontend`; Vite proxies
   `/-/api/*` and `/-/raw/*` to the Go server.
 
-Note: `make build` overwrites the tracked minimal `web/index.html` with the
-real build output. Restore it before committing:
-`git checkout -- backend/internal/assets/web/index.html` (and never stage
-`web/assets/`).
+Note: `task build` overwrites the tracked minimal `web/index.html` with the real
+build output. Restore it before committing with `task restore-web` (and never
+stage `web/assets/`).
 
 ## Data contract (backend ↔ frontend)
 
