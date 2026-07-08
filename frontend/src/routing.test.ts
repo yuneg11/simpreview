@@ -16,6 +16,9 @@ describe("document path helpers", () => {
     ["/", ""],
     ["/docs/readme.md", "docs/readme.md"],
     ["/space%20dir/100%25.md", "space dir/100%.md"],
+    ["/frontend/src/", "frontend/src"],
+    ["/docs/", "docs"],
+    ["/a//b", "a/b"],
   ])("maps location pathname %j to document path %j", (pathname, expected) => {
     expect(documentPathFromLocation(pathname)).toBe(expected);
   });

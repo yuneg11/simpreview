@@ -8,11 +8,11 @@ function normalizeDocumentPath(path: string): string {
 }
 
 export function documentPathFromLocation(pathname: string): string {
-  const cleanPath = pathname.replace(/^\/+/, "");
-  if (cleanPath === "") {
-    return "";
-  }
-  return cleanPath.split("/").map(decodePathSegment).join("/");
+  return pathname
+    .split("/")
+    .filter((segment) => segment !== "")
+    .map(decodePathSegment)
+    .join("/");
 }
 
 export function displayDocumentPath(path: string): string {
