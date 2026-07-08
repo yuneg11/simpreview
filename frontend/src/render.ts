@@ -212,7 +212,9 @@ export function isSafeHref(href: string): boolean {
   }
 
   if (trimmed.startsWith("/")) {
-    return !trimmed.startsWith("//");
+    // Reject protocol-relative ("//host") and the "/\host" variant, which
+    // browsers may normalize to "//host" (an external, protocol-relative URL).
+    return !trimmed.startsWith("//") && !trimmed.startsWith("/\\");
   }
 
   try {

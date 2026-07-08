@@ -123,6 +123,7 @@ describe("isSafeHref", () => {
   it("rejects unsafe or empty hrefs", () => {
     expect(isSafeHref("javascript:alert(1)")).toBe(false);
     expect(isSafeHref("//evil.com")).toBe(false);
+    expect(isSafeHref("/\\evil.com")).toBe(false);
     expect(isSafeHref("blob:https://x/y")).toBe(false);
     expect(isSafeHref("")).toBe(false);
     expect(isSafeHref("   ")).toBe(false);

@@ -13,7 +13,7 @@ export function Breadcrumb({ path }: { path: string }) {
       {crumbs.map((crumb, index) => {
         const isLast = index === crumbs.length - 1;
         return (
-          <span class="breadcrumb-segment">
+          <span class="breadcrumb-segment" key={crumb.path}>
             {index > 0 && <span class="breadcrumb-separator">/</span>}
             <a
               class={isLast ? "breadcrumb-link is-current" : "breadcrumb-link"}

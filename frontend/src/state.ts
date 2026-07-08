@@ -88,6 +88,7 @@ export function toggleFolder(path: string): void {
 export async function revealPath(path: string): Promise<void> {
   for (const ancestor of ancestorsOf(path)) {
     await ensureFolder(ancestor);
+    tree.value = withFolder(tree.value, ancestor, { expanded: true });
   }
 }
 
@@ -98,7 +99,9 @@ export function navigate(path: string): void {
 
 export function initApp(): void {
   window.addEventListener("popstate", () => {
-    void loadPath(documentPathFromLocation(window.location.pathname));
+    const path = documentPathFromLocation(window.location.pathname);
+    void loadPath(path);
+    void revealPath(path);
   });
   const path = documentPathFromLocation(window.location.pathname);
   void loadPath(path);

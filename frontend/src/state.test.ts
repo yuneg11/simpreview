@@ -1,6 +1,8 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
+  currentPath,
   ensureFolder,
+  initApp,
   loadPath,
   revealPath,
   toggleFolder,
@@ -192,5 +194,64 @@ describe("revealPath", () => {
     expect(tree.value.has("a/b")).toBe(true);
     expect(tree.value.get("a")?.entries).toBeDefined();
     expect(fetchMock).toHaveBeenCalledTimes(3);
+  });
+
+  it("force-expands an already-cached but collapsed ancestor", async () => {
+    // "a" is cached (has entries) but collapsed, as it would be after the
+    // user expanded then collapsed it earlier in the session.
+    tree.value = withFolder(new Map(), "a", {
+      expanded: false,
+      loading: false,
+      entries: [],
+    });
+
+    const fetchMock = vi.fn(async (_input: RequestInfo | URL) => directoryResponse());
+    vi.stubGlobal("fetch", fetchMock);
+
+    await revealPath("a/b/c.md");
+
+    expect(tree.value.get("")?.expanded).toBe(true);
+    expect(tree.value.get("a")?.expanded).toBe(true);
+    expect(tree.value.get("a/b")?.expanded).toBe(true);
+
+    // "a" was already cached (had entries), so ensureFolder must not have
+    // re-fetched it: only "" and "a/b" needed a network round trip.
+    const fetchedUrls = fetchMock.mock.calls.map((call) => String(call[0]));
+    expect(fetchedUrls).not.toContain("/-/api/fs/a");
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+});
+
+describe("initApp popstate wiring", () => {
+  afterEach(() => {
+    tree.value = new Map();
+    view.value = { status: "loading", path: "" };
+    vi.unstubAllGlobals();
+  });
+
+  it("reveals the restored path's ancestors when the browser fires popstate", async () => {
+    const fetchMock = vi.fn(async () => directoryResponse());
+    vi.stubGlobal("fetch", fetchMock);
+
+    initApp();
+    // Let the initial (root) load settle before simulating back/forward.
+    await vi.waitFor(() => expect(view.value.status).toBe("loaded"));
+
+    fetchMock.mockClear();
+    tree.value = new Map();
+
+    window.history.pushState(null, "", "/a/b/c.md");
+    window.dispatchEvent(new PopStateEvent("popstate"));
+
+    // Allow the async popstate handler's loadPath/revealPath chains to run.
+    await vi.waitFor(() => expect(tree.value.get("a/b")?.expanded).toBe(true));
+
+    expect(tree.value.get("")?.expanded).toBe(true);
+    expect(tree.value.get("a")?.expanded).toBe(true);
+    expect(tree.value.get("a/b")?.expanded).toBe(true);
+
+    // loadPath also ran for the restored location (not just revealPath).
+    expect(currentPath.value).toBe("a/b/c.md");
+    expect(view.value.status).toBe("loaded");
   });
 });
