@@ -76,8 +76,15 @@ export function FileActions({
 }
 
 export function FileView({ node, showSource }: { node: File; showSource: boolean }) {
+  // A code display (line-number gutter) fills the full content area and scrolls
+  // internally, so the gutter divider reaches the bottom and the horizontal
+  // scrollbar stays pinned to the bottom of the viewport.
+  const isCode =
+    node.renderMode === "source" ||
+    node.renderMode === "text" ||
+    (node.renderMode === "markdown" && showSource);
   return (
-    <div class={`file-view render-${node.renderMode}`}>
+    <div class={`file-view render-${node.renderMode}${isCode ? " is-code" : ""}`}>
       <FileBody
         node={node}
         content={node.content ?? ""}
@@ -113,19 +120,21 @@ function CodeView({ content, file }: { content: string; file: File }) {
   const numbers = Array.from({ length: Math.max(lineCount, 1) }, (_unused, index) => index + 1);
   return (
     <div class="code-view">
-      <div class="code-gutter" aria-hidden="true">
-        {numbers.map((n) => (
-          <span class="code-line-no" key={n}>
-            {n}
-          </span>
-        ))}
+      <div class="code-inner">
+        <div class="code-gutter" aria-hidden="true">
+          {numbers.map((n) => (
+            <span class="code-line-no" key={n}>
+              {n}
+            </span>
+          ))}
+        </div>
+        <pre class="code-body">
+          <code
+            class={language ? `hljs language-${language}` : "hljs"}
+            dangerouslySetInnerHTML={{ __html: html }}
+          />
+        </pre>
       </div>
-      <pre class="code-body">
-        <code
-          class={language ? `hljs language-${language}` : "hljs"}
-          dangerouslySetInnerHTML={{ __html: html }}
-        />
-      </pre>
     </div>
   );
 }

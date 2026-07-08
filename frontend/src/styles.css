@@ -367,14 +367,36 @@ body {
 }
 
 /* Code view ---------------------------------------------------------------- */
-.code-view {
+/* A code file fills the full content area and scrolls inside .code-view, so the
+   gutter divider runs to the bottom and the horizontal scrollbar stays pinned
+   to the bottom of the viewport regardless of file length. */
+.file-view.is-code {
+  height: 100%;
   display: flex;
-  overflow-x: auto;
+  flex-direction: column;
+}
+
+.file-view.is-code .code-view {
+  flex: 1;
+  min-height: 0;
+}
+
+.code-view {
+  overflow: auto;
   background: var(--canvas);
   font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas,
     "Liberation Mono", monospace;
   font-size: 12px;
   line-height: 20px;
+}
+
+/* Flex row (gutter + code) that fills the code-view height for short files and
+   grows for long ones, so the gutter's right border is always full-height. */
+.code-inner {
+  display: flex;
+  min-height: 100%;
+  width: max-content;
+  min-width: 100%;
 }
 
 .code-gutter {
