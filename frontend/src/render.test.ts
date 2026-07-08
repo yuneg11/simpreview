@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import type { File } from "./api";
-import { highlightSource, renderMarkdown } from "./render";
+import { highlightSource, isSafeHref, renderMarkdown } from "./render";
 
 function file(overrides: Partial<File>): File {
   return {
@@ -108,5 +108,23 @@ describe("highlightSource", () => {
     expect(result.language).toBeUndefined();
     expect(result.html).toContain("&lt;b&gt;hi&lt;/b&gt;");
     expect(result.lineCount).toBe(2);
+  });
+});
+
+describe("isSafeHref", () => {
+  it("accepts safe hrefs", () => {
+    expect(isSafeHref("#section")).toBe(true);
+    expect(isSafeHref("/docs/a.md")).toBe(true);
+    expect(isSafeHref("https://example.com")).toBe(true);
+    expect(isSafeHref("http://example.com")).toBe(true);
+    expect(isSafeHref("mailto:x@example.com")).toBe(true);
+  });
+
+  it("rejects unsafe or empty hrefs", () => {
+    expect(isSafeHref("javascript:alert(1)")).toBe(false);
+    expect(isSafeHref("//evil.com")).toBe(false);
+    expect(isSafeHref("blob:https://x/y")).toBe(false);
+    expect(isSafeHref("")).toBe(false);
+    expect(isSafeHref("   ")).toBe(false);
   });
 });
