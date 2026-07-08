@@ -17,7 +17,7 @@ import xml from "highlight.js/lib/languages/xml";
 import yaml from "highlight.js/lib/languages/yaml";
 import MarkdownIt from "markdown-it";
 
-import type { File as PreviewFile, Node as PreviewNode } from "./api";
+import type { File as PreviewFile } from "./api";
 import { countLines } from "./format";
 
 hljs.registerLanguage("bash", bash);
@@ -47,27 +47,6 @@ const markdown = new MarkdownIt({
 // Markdown links back as literal text that still includes the unsafe URL.
 markdown.validateLink = () => true;
 
-export function renderNode(node: PreviewNode): string {
-  if (node.kind === "directory") {
-    return `<div class="preview-placeholder">Directory preview is not available for ${escapeHTML(
-      node.path || "/",
-    )}.</div>`;
-  }
-
-  switch (node.renderMode) {
-    case "markdown":
-      return renderMarkdown(node.content ?? "");
-    case "source":
-      return renderSource(node);
-    case "text":
-      return renderText(node.content ?? "");
-    case "binary":
-      return renderBinary(node);
-    default:
-      return renderText(node.content ?? "");
-  }
-}
-
 export function renderMarkdown(content: string): string {
   const rendered = markdown.render(content);
   return DOMPurify.sanitize(rendered);
@@ -88,35 +67,6 @@ export function highlightSource(content: string, file: PreviewFile): Highlighted
     language: highlighted ? language : undefined,
     lineCount: countLines(content),
   };
-}
-
-function renderSource(file: PreviewFile): string {
-  const content = file.content ?? "";
-  const language = languageForFile(file);
-
-  if (language) {
-    const highlighted = highlightCode(content, language);
-    if (highlighted) {
-      return `<pre class="preview-source"><code class="hljs language-${escapeAttribute(
-        language,
-      )}">${highlighted}</code></pre>`;
-    }
-  }
-
-  return `<pre class="preview-source"><code>${escapeHTML(content)}</code></pre>`;
-}
-
-function renderText(content: string): string {
-  return `<pre class="preview-text">${escapeHTML(content)}</pre>`;
-}
-
-function renderBinary(file: PreviewFile): string {
-  const rawLink =
-    file.rawURL && isSafeHref(file.rawURL)
-      ? `<a href="${escapeAttribute(file.rawURL)}">Open raw file</a>`
-      : "";
-
-  return `<div class="preview-binary"><p>Binary preview is not available.</p>${rawLink}</div>`;
 }
 
 function renderHighlightedBlock(code: string, language?: string): string {
