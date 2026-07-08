@@ -419,6 +419,8 @@ body {
   display: block;
   padding: 0 16px;
   white-space: pre;
+  -moz-tab-size: 4;
+  tab-size: 4;
   background: transparent;
   overflow: visible;
 }

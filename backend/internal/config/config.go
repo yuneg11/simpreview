@@ -94,7 +94,6 @@ func ParseArgs(args []string) (Config, error) {
 
 	flags := flag.NewFlagSet("simpreview", flag.ContinueOnError)
 	flags.SetOutput(io.Discard)
-	flags.StringVar(&cfg.Root, "root", cfg.Root, "root directory to preview")
 	flags.StringVar(&cfg.Addr, "addr", cfg.Addr, "address to listen on")
 	flags.BoolVar(&cfg.ShowHidden, "show-hidden", cfg.ShowHidden, "show hidden files")
 	flags.Var(&allowedSymlinkRoots, "allow-symlink-root", "allowed symlink root")
@@ -103,14 +102,30 @@ func ParseArgs(args []string) (Config, error) {
 	flags.IntVar(&cfg.MaxDirEntries, "max-dir-entries", cfg.MaxDirEntries, "maximum directory entries")
 	flags.BoolVar(&cfg.Dev, "dev", cfg.Dev, "enable development mode")
 
-	if err := flags.Parse(args); err != nil {
-		return Config{}, err
+	// The root directory is a positional argument. flag.Parse stops at the first
+	// non-flag token, so consume the positional and resume parsing the remainder;
+	// this accepts the directory before, between, or after flags.
+	var positionals []string
+	rest := args
+	for {
+		if err := flags.Parse(rest); err != nil {
+			return Config{}, err
+		}
+		if flags.NArg() == 0 {
+			break
+		}
+		positionals = append(positionals, flags.Arg(0))
+		rest = flags.Args()[1:]
 	}
-	if flags.NArg() > 0 {
-		return Config{}, fmt.Errorf("unexpected positional argument %q", flags.Arg(0))
+	switch {
+	case len(positionals) == 0:
+		return Config{}, errors.New("root directory is required (usage: simpreview [flags] <dir>)")
+	case len(positionals) > 1:
+		return Config{}, fmt.Errorf("unexpected extra argument %q", positionals[1])
 	}
+	cfg.Root = positionals[0]
 	if strings.TrimSpace(cfg.Root) == "" {
-		return Config{}, errors.New("--root is required")
+		return Config{}, errors.New("root directory must not be empty")
 	}
 
 	parsedMaxPreviewSize, err := ParseSize(maxPreviewSize)

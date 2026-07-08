@@ -53,17 +53,17 @@ tasks:
       - go build -buildvcs=false -o simpreview ./cmd/simpreview
 
   serve:
-    desc: "Build then run the server (default root = repo root; override: task serve -- --root /path)"
+    desc: "Build then run the server (default root = repo root; override: task serve -- /path)"
     deps: [build]
     dir: backend
     cmds:
-      - ./simpreview {{.CLI_ARGS | default "--root .. --addr 127.0.0.1:8080"}}
+      - ./simpreview {{.CLI_ARGS | default ".. --addr 127.0.0.1:8080"}}
 
   dev-backend:
     desc: Run the Go server in dev mode against ../docs
     dir: backend
     cmds:
-      - go run ./cmd/simpreview --root ../docs --addr 127.0.0.1:8080 --dev
+      - go run ./cmd/simpreview ../docs --addr 127.0.0.1:8080 --dev
 
   dev-frontend:
     desc: Run the Vite dev server (proxies /-/api and /-/raw to the backend)

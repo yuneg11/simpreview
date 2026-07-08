@@ -34,21 +34,23 @@ put the `simpreview` binary on your `PATH`.
 git clone https://github.com/yuneg11/simpreview.git
 cd simpreview
 task build
-./backend/simpreview --root .
+./backend/simpreview .
 ```
 
 ## Usage
 
 ```sh
-simpreview --root /path/to/dir
+simpreview /path/to/dir
 # then open http://127.0.0.1:8080
 ```
+
+The directory to browse is a required positional argument; flags may appear
+before or after it (e.g. `simpreview /path/to/dir --addr 0.0.0.0:8080`).
 
 ### Options
 
 | Flag | Default | Description |
 |------|---------|-------------|
-| `--root` | (required) | Directory to browse. |
 | `--addr` | `127.0.0.1:8080` | Listen address. |
 | `--show-hidden` | `false` | Include dotfiles and dot-directories. |
 | `--allow-symlink-root <dir>` | — | Extra directory that symlink targets may resolve under (repeatable). |
@@ -121,7 +123,7 @@ task            # list tasks
 task test       # backend + frontend tests
 task typecheck  # frontend type-check
 task build      # build the frontend and embed it into the Go binary
-task serve      # build, then run the server (task serve -- --root /path)
+task serve      # build, then run the server (task serve -- /path)
 ```
 
 ## License

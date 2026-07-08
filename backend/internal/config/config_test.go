@@ -2,6 +2,7 @@ package config
 
 import (
 	"reflect"
+	"strings"
 	"testing"
 )
 
@@ -77,12 +78,15 @@ func TestParseArgsRequiresRoot(t *testing.T) {
 	if _, err := ParseArgs(nil); err == nil {
 		t.Fatal("ParseArgs(nil) error = nil, want missing root error")
 	}
+	if _, err := ParseArgs([]string{"--addr", "0.0.0.0:9090"}); err == nil {
+		t.Fatal("ParseArgs(flags only) error = nil, want missing root error")
+	}
 }
 
 func TestParseArgsRejectsWhitespaceOnlyRoot(t *testing.T) {
 	for _, input := range []string{"", "   ", "\t"} {
 		t.Run(input, func(t *testing.T) {
-			_, err := ParseArgs([]string{"--root", input})
+			_, err := ParseArgs([]string{input})
 			if err == nil {
 				t.Fatal("ParseArgs() error = nil, want invalid root error")
 			}
@@ -93,7 +97,7 @@ func TestParseArgsRejectsWhitespaceOnlyRoot(t *testing.T) {
 func TestParseArgsRootOnlyUsesDefaults(t *testing.T) {
 	defaults := Default()
 
-	cfg, err := ParseArgs([]string{"--root", "/workspace"})
+	cfg, err := ParseArgs([]string{"/workspace"})
 	if err != nil {
 		t.Fatalf("ParseArgs() error = %v", err)
 	}
@@ -126,7 +130,6 @@ func TestParseArgsRootOnlyUsesDefaults(t *testing.T) {
 
 func TestParseArgsSetsFlags(t *testing.T) {
 	cfg, err := ParseArgs([]string{
-		"--root", "/workspace",
 		"--addr", "0.0.0.0:9090",
 		"--show-hidden",
 		"--allow-symlink-root", "/linked/a",
@@ -135,6 +138,7 @@ func TestParseArgsSetsFlags(t *testing.T) {
 		"--max-raw-file-size", "1GB",
 		"--max-dir-entries", "42",
 		"--dev",
+		"/workspace",
 	})
 	if err != nil {
 		t.Fatalf("ParseArgs() error = %v", err)
@@ -166,17 +170,52 @@ func TestParseArgsSetsFlags(t *testing.T) {
 	}
 }
 
-func TestParseArgsRejectsTrailingPositionalArgs(t *testing.T) {
-	_, err := ParseArgs([]string{"--root", "/workspace", "typo"})
-	if err == nil {
-		t.Fatal("ParseArgs() error = nil, want trailing positional arg error")
+func TestParseArgsAcceptsRootInAnyPosition(t *testing.T) {
+	tests := []struct {
+		name string
+		args []string
+	}{
+		{name: "root before flags", args: []string{"/workspace", "--addr", "0.0.0.0:9090", "--show-hidden"}},
+		{name: "root between flags", args: []string{"--show-hidden", "/workspace", "--addr", "0.0.0.0:9090"}},
+		{name: "root after flags", args: []string{"--show-hidden", "--addr", "0.0.0.0:9090", "/workspace"}},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cfg, err := ParseArgs(tt.args)
+			if err != nil {
+				t.Fatalf("ParseArgs(%v) error = %v", tt.args, err)
+			}
+			if cfg.Root != "/workspace" {
+				t.Fatalf("Root = %q, want %q", cfg.Root, "/workspace")
+			}
+			if cfg.Addr != "0.0.0.0:9090" {
+				t.Fatalf("Addr = %q, want %q", cfg.Addr, "0.0.0.0:9090")
+			}
+			if !cfg.ShowHidden {
+				t.Fatal("ShowHidden = false, want true")
+			}
+		})
+	}
+}
+
+func TestParseArgsRejectsMultiplePositionalArgs(t *testing.T) {
+	for _, args := range [][]string{
+		{"/workspace", "typo"},
+		{"--addr", "0.0.0.0:9090", "/a", "/b"},
+	} {
+		t.Run(strings.Join(args, " "), func(t *testing.T) {
+			if _, err := ParseArgs(args); err == nil {
+				t.Fatal("ParseArgs() error = nil, want extra positional arg error")
+			}
+		})
 	}
 }
 
 func TestParseArgsRejectsEmptyAllowedSymlinkRoot(t *testing.T) {
 	for _, input := range []string{"", "   ", "\t"} {
 		t.Run(input, func(t *testing.T) {
-			_, err := ParseArgs([]string{"--root", "/workspace", "--allow-symlink-root", input})
+			_, err := ParseArgs([]string{"/workspace", "--allow-symlink-root", input})
 			if err == nil {
 				t.Fatal("ParseArgs() error = nil, want invalid allow-symlink-root error")
 			}
@@ -187,7 +226,7 @@ func TestParseArgsRejectsEmptyAllowedSymlinkRoot(t *testing.T) {
 func TestParseArgsRejectsNonPositiveMaxDirEntries(t *testing.T) {
 	for _, input := range []string{"0", "-1"} {
 		t.Run(input, func(t *testing.T) {
-			_, err := ParseArgs([]string{"--root", "/workspace", "--max-dir-entries", input})
+			_, err := ParseArgs([]string{"/workspace", "--max-dir-entries", input})
 			if err == nil {
 				t.Fatal("ParseArgs() error = nil, want non-positive max-dir-entries error")
 			}
