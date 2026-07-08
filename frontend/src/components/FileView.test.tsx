@@ -1,7 +1,7 @@
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render } from "@testing-library/preact";
 import type { File } from "../api";
-import { FileView } from "./FileView";
+import { FileActions, FileView } from "./FileView";
 
 function file(overrides: Partial<File>): File {
   return {
@@ -18,7 +18,7 @@ function file(overrides: Partial<File>): File {
 describe("FileView", () => {
   afterEach(cleanup);
 
-  it("renders markdown as a markdown-body by default and toggles to source", () => {
+  it("renders markdown as a markdown-body when showSource is false", () => {
     const { container } = render(
       <FileView
         node={file({
@@ -28,10 +28,25 @@ describe("FileView", () => {
           content: "# Title\n\nHello",
           rawURL: "/-/raw/README.md",
         })}
+        showSource={false}
       />,
     );
     expect(container.querySelector(".markdown-body h1")?.textContent).toBe("Title");
-    fireEvent.click(container.querySelector(".toggle-source") as Element);
+    expect(container.querySelector(".code-view")).toBeNull();
+  });
+
+  it("renders markdown source when showSource is true", () => {
+    const { container } = render(
+      <FileView
+        node={file({
+          path: "README.md",
+          mime: "text/markdown; charset=utf-8",
+          renderMode: "markdown",
+          content: "# Title\n\nHello",
+        })}
+        showSource={true}
+      />,
+    );
     expect(container.querySelector(".markdown-body")).toBeNull();
     expect(container.querySelector(".code-view")).not.toBeNull();
   });
@@ -45,11 +60,11 @@ describe("FileView", () => {
           renderMode: "source",
           content: "const x = 1;\nconst y = 2;",
         })}
+        showSource={false}
       />,
     );
     expect(container.querySelectorAll(".code-line-no").length).toBe(2);
     expect(container.querySelector(".code-body .hljs-keyword")).not.toBeNull();
-    expect(container.textContent).toContain("2 lines");
   });
 
   it("renders an inline image for image binaries", () => {
@@ -62,6 +77,7 @@ describe("FileView", () => {
           content: undefined,
           rawURL: "/-/raw/logo.png",
         })}
+        showSource={false}
       />,
     );
     expect(container.querySelector(".binary-view img")?.getAttribute("src")).toBe("/-/raw/logo.png");
@@ -77,9 +93,94 @@ describe("FileView", () => {
           content: undefined,
           rawURL: "/-/raw/data.bin",
         })}
+        showSource={false}
       />,
     );
     expect(container.querySelector(".binary-view img")).toBeNull();
     expect(container.textContent.toLowerCase()).toContain("binary");
+  });
+});
+
+describe("FileActions", () => {
+  afterEach(cleanup);
+
+  it("shows line count + a Code toggle for markdown and fires onToggleSource", () => {
+    const onToggleSource = vi.fn();
+    const { container } = render(
+      <FileActions
+        node={file({
+          path: "README.md",
+          mime: "text/markdown; charset=utf-8",
+          renderMode: "markdown",
+          content: "# Title\n\nHello",
+          rawURL: "/-/raw/README.md",
+        })}
+        showSource={false}
+        onToggleSource={onToggleSource}
+      />,
+    );
+    expect(container.querySelector(".file-meta")?.textContent).toContain("3 lines");
+    const toggle = container.querySelector(".toggle-source") as Element;
+    expect(toggle.textContent).toBe("Code");
+    fireEvent.click(toggle);
+    expect(onToggleSource).toHaveBeenCalledTimes(1);
+  });
+
+  it("labels the toggle Preview when source is shown", () => {
+    const { container } = render(
+      <FileActions
+        node={file({
+          path: "README.md",
+          mime: "text/markdown; charset=utf-8",
+          renderMode: "markdown",
+          content: "# Title",
+        })}
+        showSource={true}
+        onToggleSource={() => {}}
+      />,
+    );
+    expect(container.querySelector(".toggle-source")?.textContent).toBe("Preview");
+  });
+
+  it("shows meta and Raw/Copy/Download for a source file, no markdown toggle", () => {
+    const { container } = render(
+      <FileActions
+        node={file({
+          path: "app.ts",
+          mime: "text/typescript; charset=utf-8",
+          renderMode: "source",
+          content: "const x = 1;\nconst y = 2;",
+          rawURL: "/-/raw/app.ts",
+        })}
+        showSource={false}
+        onToggleSource={() => {}}
+      />,
+    );
+    expect(container.querySelector(".file-meta")?.textContent).toContain("2 lines");
+    expect(container.querySelector(".toggle-source")).toBeNull();
+    const actions = container.textContent ?? "";
+    expect(actions).toContain("Raw");
+    expect(actions).toContain("Copy");
+    expect(actions).toContain("Download");
+  });
+
+  it("omits line meta and Copy for binary files", () => {
+    const { container } = render(
+      <FileActions
+        node={file({
+          path: "logo.png",
+          mime: "image/png",
+          renderMode: "binary",
+          content: undefined,
+          rawURL: "/-/raw/logo.png",
+        })}
+        showSource={false}
+        onToggleSource={() => {}}
+      />,
+    );
+    expect(container.querySelector(".file-meta")).toBeNull();
+    expect(container.textContent).not.toContain("Copy");
+    expect(container.textContent).toContain("Raw");
+    expect(container.textContent).toContain("Download");
   });
 });

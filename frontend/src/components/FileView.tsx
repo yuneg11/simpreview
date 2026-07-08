@@ -1,59 +1,77 @@
-import { useState } from "preact/hooks";
-
 import type { File } from "../api";
 import { countLines, formatSize } from "../format";
 import { highlightSource, isSafeHref, renderMarkdown } from "../render";
 import { CopyIcon, DownloadIcon, LinkIcon } from "../icons";
 
-export function FileView({ node }: { node: File }) {
-  const [showSource, setShowSource] = useState(false);
+function safeRawURL(node: File): string | undefined {
+  return node.rawURL && isSafeHref(node.rawURL) ? node.rawURL : undefined;
+}
+
+/**
+ * Right side of the merged header row for a file: line count + size, plus the
+ * Code/Preview toggle (Markdown only) and Raw / Copy / Download actions. Lives
+ * in the header row above the content card, not inside it.
+ */
+export function FileActions({
+  node,
+  showSource,
+  onToggleSource,
+}: {
+  node: File;
+  showSource: boolean;
+  onToggleSource: () => void;
+}) {
   const content = node.content ?? "";
   const isMarkdown = node.renderMode === "markdown";
   const isBinary = node.renderMode === "binary";
   const bytes = new TextEncoder().encode(content).length;
   const lineCount = countLines(content);
-  const rawURL = node.rawURL && isSafeHref(node.rawURL) ? node.rawURL : undefined;
+  const rawURL = safeRawURL(node);
 
   function copyContent() {
     void navigator.clipboard?.writeText(content);
   }
 
   return (
+    <div class="file-actions">
+      {!isBinary && (
+        <span class="file-meta">
+          {lineCount} lines <span class="dot">·</span> {formatSize(bytes)}
+        </span>
+      )}
+      {isMarkdown && (
+        <button type="button" class="toggle-source" onClick={onToggleSource}>
+          {showSource ? "Preview" : "Code"}
+        </button>
+      )}
+      {rawURL && (
+        <a class="file-action" href={rawURL} title="View raw">
+          <LinkIcon /> Raw
+        </a>
+      )}
+      {!isBinary && content !== "" && (
+        <button type="button" class="file-action" onClick={copyContent} title="Copy content">
+          <CopyIcon /> Copy
+        </button>
+      )}
+      {rawURL && (
+        <a class="file-action" href={rawURL} download title="Download">
+          <DownloadIcon /> Download
+        </a>
+      )}
+    </div>
+  );
+}
+
+export function FileView({ node, showSource }: { node: File; showSource: boolean }) {
+  return (
     <div class={`file-view render-${node.renderMode}`}>
-      <div class="file-header">
-        <div class="file-header-info">
-          {!isBinary && (
-            <>
-              <span>{lineCount} lines</span>
-              <span class="dot">·</span>
-            </>
-          )}
-          {!isBinary && <span>{formatSize(bytes)}</span>}
-        </div>
-        <div class="file-header-actions">
-          {isMarkdown && (
-            <button type="button" class="toggle-source" onClick={() => setShowSource((v) => !v)}>
-              {showSource ? "Preview" : "Code"}
-            </button>
-          )}
-          {rawURL && (
-            <a class="file-action" href={rawURL} title="View raw">
-              <LinkIcon /> Raw
-            </a>
-          )}
-          {!isBinary && content !== "" && (
-            <button type="button" class="file-action" onClick={copyContent} title="Copy content">
-              <CopyIcon /> Copy
-            </button>
-          )}
-          {rawURL && (
-            <a class="file-action" href={rawURL} download title="Download">
-              <DownloadIcon /> Download
-            </a>
-          )}
-        </div>
-      </div>
-      <FileBody node={node} content={content} showSource={showSource} rawURL={rawURL} />
+      <FileBody
+        node={node}
+        content={node.content ?? ""}
+        showSource={showSource}
+        rawURL={safeRawURL(node)}
+      />
     </div>
   );
 }

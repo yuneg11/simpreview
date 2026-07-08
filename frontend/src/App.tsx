@@ -1,28 +1,64 @@
+import { useEffect, useState } from "preact/hooks";
+
 import {
   hasExternalIntent,
   internalDocumentPathForLink,
   isPlainPrimaryClick,
 } from "./routing";
 import { currentPath, navigate, toggleFolder, tree, view } from "./state";
+import { SidebarIcon } from "./icons";
 import { Breadcrumb } from "./components/Breadcrumb";
 import { DirectoryView } from "./components/DirectoryView";
 import { FileTree } from "./components/FileTree";
-import { FileView } from "./components/FileView";
+import { FileActions, FileView } from "./components/FileView";
 import { ErrorView, LoadingView } from "./components/StatusViews";
 
 export function App() {
   const state = view.value;
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [showSource, setShowSource] = useState(false);
+
+  const fileNode =
+    state.status === "loaded" && state.node.kind === "file" ? state.node : null;
+
+  // Reset the Markdown Code/Preview toggle whenever a different file is opened.
+  useEffect(() => {
+    setShowSource(false);
+  }, [fileNode?.path]);
+
   return (
     <div class="app-shell" onClick={handleClick}>
-      <header class="topbar">
-        <span class="app-title">web-preview</span>
-      </header>
-      <div class="app-body">
-        <FileTree tree={tree.value} currentPath={currentPath.value} onToggle={toggleFolder} />
+      <div class={sidebarOpen ? "app-body" : "app-body is-collapsed"}>
+        {sidebarOpen && (
+          <FileTree
+            tree={tree.value}
+            currentPath={currentPath.value}
+            onToggle={toggleFolder}
+          />
+        )}
         <main class="content-pane">
-          <Breadcrumb path={currentPath.value} />
+          <div class="content-header">
+            <button
+              type="button"
+              class="sidebar-toggle"
+              aria-label={sidebarOpen ? "Hide file tree" : "Show file tree"}
+              aria-pressed={sidebarOpen}
+              title={sidebarOpen ? "Hide file tree" : "Show file tree"}
+              onClick={() => setSidebarOpen((open) => !open)}
+            >
+              <SidebarIcon />
+            </button>
+            <Breadcrumb path={currentPath.value} />
+            {fileNode && (
+              <FileActions
+                node={fileNode}
+                showSource={showSource}
+                onToggleSource={() => setShowSource((v) => !v)}
+              />
+            )}
+          </div>
           <div class="content-body">
-            <ContentBody state={state} />
+            <ContentBody state={state} showSource={showSource} />
           </div>
         </main>
       </div>
@@ -30,7 +66,13 @@ export function App() {
   );
 }
 
-function ContentBody({ state }: { state: typeof view.value }) {
+function ContentBody({
+  state,
+  showSource,
+}: {
+  state: typeof view.value;
+  showSource: boolean;
+}) {
   if (state.status === "loading") {
     return <LoadingView path={state.path} />;
   }
@@ -40,7 +82,7 @@ function ContentBody({ state }: { state: typeof view.value }) {
   return state.node.kind === "directory" ? (
     <DirectoryView node={state.node} />
   ) : (
-    <FileView node={state.node} />
+    <FileView node={state.node} showSource={showSource} />
   );
 }
 
