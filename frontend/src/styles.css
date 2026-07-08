@@ -172,7 +172,6 @@ body {
   flex: 1;
   min-height: 0;
   overflow: auto;
-  padding: 16px 24px 48px;
 }
 
 .sidebar-toggle {
@@ -273,12 +272,6 @@ body {
 }
 
 /* Directory view ----------------------------------------------------------- */
-.dir-view {
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  overflow: hidden;
-}
-
 .notice {
   padding: 8px 16px;
   background: #fff8c5;
@@ -303,7 +296,7 @@ body {
 }
 
 .dir-table td {
-  padding: 8px 12px;
+  padding: 8px 16px;
 }
 
 .dir-cell-icon {
@@ -342,12 +335,6 @@ body {
 }
 
 /* File view ---------------------------------------------------------------- */
-.file-view {
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  overflow: hidden;
-}
-
 .file-action,
 .toggle-source {
   display: inline-flex;
@@ -427,13 +414,10 @@ body {
 /* Status views ------------------------------------------------------------- */
 .status-view {
   padding: 32px;
-  border: 1px solid var(--border);
-  border-radius: 6px;
   color: var(--fg-muted);
 }
 
 .status-view.is-error {
-  border-color: #ff818266;
   background: #fff5f5;
   color: var(--fg-default);
 }
