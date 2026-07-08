@@ -1,0 +1,12 @@
+docs/superpowers/**
+
+backend/preview
+frontend/node_modules/
+frontend/dist/
+
+# Generated frontend build output embedded by the Go binary.
+# The minimal fallback web/index.html stays tracked so `go build` works on a
+# fresh clone; the built bundles are produced by `make build-frontend`.
+backend/internal/assets/web/assets/
+
+*.log
