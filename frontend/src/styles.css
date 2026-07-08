@@ -51,6 +51,11 @@ body {
   grid-template-columns: 1fr;
 }
 
+/* Drawer backdrop is only used for the mobile overlay tree (see media query). */
+.drawer-backdrop {
+  display: none;
+}
+
 /* File tree ---------------------------------------------------------------- */
 .file-tree {
   border-right: 1px solid var(--border);
@@ -465,4 +470,64 @@ body {
 .binary-view img {
   max-width: 100%;
   height: auto;
+}
+
+/* Small screens ------------------------------------------------------------ */
+/* The file tree becomes an overlay drawer; content uses the full width. */
+@media (max-width: 768px) {
+  .app-body,
+  .app-body.is-collapsed {
+    grid-template-columns: 1fr;
+  }
+
+  .file-tree {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: min(80vw, 300px);
+    z-index: 30;
+    box-shadow: 0 0 24px rgba(31, 35, 40, 0.2);
+  }
+
+  .drawer-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 20;
+    background: rgba(31, 35, 40, 0.4);
+  }
+
+  .content-header {
+    padding: 0 12px;
+    gap: 6px;
+  }
+
+  .breadcrumb {
+    font-size: 14px;
+  }
+
+  .markdown-body {
+    padding: 16px;
+  }
+
+  .status-view,
+  .binary-view {
+    padding: 24px 16px;
+  }
+
+  /* Hide the least-essential column so rows fit narrow widths. */
+  .dir-cell-modified {
+    display: none;
+  }
+
+  .dir-table td {
+    padding: 10px 12px;
+  }
+
+  /* Larger tap targets for touch. */
+  .tree-folder-row,
+  .tree-file {
+    padding: 8px;
+  }
 }

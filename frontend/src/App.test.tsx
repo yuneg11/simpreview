@@ -88,6 +88,27 @@ describe("App", () => {
     expect(container.querySelector(".file-tree")).not.toBeNull();
   });
 
+  it("uses an overlay drawer on small screens (closed by default, backdrop closes it)", () => {
+    vi.stubGlobal("matchMedia", (query: string) => ({
+      matches: true,
+      media: query,
+      addEventListener() {},
+      removeEventListener() {},
+    }));
+    view.value = { status: "loading", path: "" };
+    const { container } = render(<App />);
+    // Closed by default on mobile: tree hidden, open button lives in the header.
+    expect(container.querySelector(".file-tree")).toBeNull();
+    expect(container.querySelector(".content-header .sidebar-toggle")).not.toBeNull();
+    // Opening shows the drawer + backdrop.
+    fireEvent.click(container.querySelector(".content-header .sidebar-toggle") as Element);
+    expect(container.querySelector(".file-tree")).not.toBeNull();
+    expect(container.querySelector(".drawer-backdrop")).not.toBeNull();
+    // Tapping the backdrop closes it.
+    fireEvent.click(container.querySelector(".drawer-backdrop") as Element);
+    expect(container.querySelector(".file-tree")).toBeNull();
+  });
+
   it("shows file actions in the header row and toggles Code/Preview", () => {
     currentPath.value = "README.md";
     view.value = { status: "loaded", node: markdownFile("# Title\n\nHello") };

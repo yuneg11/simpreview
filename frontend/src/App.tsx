@@ -13,9 +13,21 @@ import { FileTree } from "./components/FileTree";
 import { FileActions, FileView } from "./components/FileView";
 import { ErrorView, LoadingView } from "./components/StatusViews";
 
+// Below this width the file tree is an overlay drawer rather than a fixed column.
+const MOBILE_QUERY = "(max-width: 768px)";
+
+function isMobile(): boolean {
+  return (
+    typeof window !== "undefined" &&
+    typeof window.matchMedia === "function" &&
+    window.matchMedia(MOBILE_QUERY).matches
+  );
+}
+
 export function App() {
   const state = view.value;
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  // Start with the tree open on wide screens and closed on small screens.
+  const [sidebarOpen, setSidebarOpen] = useState(() => !isMobile());
   const [showSource, setShowSource] = useState(false);
 
   const fileNode =
@@ -26,6 +38,13 @@ export function App() {
     setShowSource(false);
   }, [fileNode?.path]);
 
+  // On small screens, close the drawer after navigating so the content shows.
+  useEffect(() => {
+    if (isMobile()) {
+      setSidebarOpen(false);
+    }
+  }, [currentPath.value]);
+
   return (
     <div class="app-shell" onClick={handleClick}>
       <div class={sidebarOpen ? "app-body" : "app-body is-collapsed"}>
@@ -35,6 +54,13 @@ export function App() {
             currentPath={currentPath.value}
             onToggle={toggleFolder}
             onCollapse={() => setSidebarOpen(false)}
+          />
+        )}
+        {sidebarOpen && (
+          <div
+            class="drawer-backdrop"
+            aria-hidden="true"
+            onClick={() => setSidebarOpen(false)}
           />
         )}
         <main class="content-pane">
