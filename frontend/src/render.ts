@@ -18,6 +18,7 @@ import yaml from "highlight.js/lib/languages/yaml";
 import MarkdownIt from "markdown-it";
 
 import type { File as PreviewFile, Node as PreviewNode } from "./api";
+import { countLines } from "./format";
 
 hljs.registerLanguage("bash", bash);
 hljs.registerLanguage("c", c);
@@ -67,9 +68,26 @@ export function renderNode(node: PreviewNode): string {
   }
 }
 
-function renderMarkdown(content: string): string {
+export function renderMarkdown(content: string): string {
   const rendered = markdown.render(content);
   return DOMPurify.sanitize(rendered);
+}
+
+export interface HighlightedSource {
+  html: string;
+  language?: string;
+  lineCount: number;
+}
+
+export function highlightSource(content: string, file: PreviewFile): HighlightedSource {
+  const normalized = content.endsWith("\n") ? content.slice(0, -1) : content;
+  const language = languageForFile(file);
+  const highlighted = language ? highlightCode(normalized, language) : undefined;
+  return {
+    html: highlighted ?? escapeHTML(normalized),
+    language: highlighted ? language : undefined,
+    lineCount: countLines(content),
+  };
 }
 
 function renderSource(file: PreviewFile): string {
@@ -233,7 +251,7 @@ function normalizeLanguage(language?: string): string | undefined {
   return hljs.getLanguage(normalized) ? normalized : undefined;
 }
 
-function isSafeHref(href: string): boolean {
+export function isSafeHref(href: string): boolean {
   const trimmed = href.trim();
   if (!trimmed) {
     return false;
