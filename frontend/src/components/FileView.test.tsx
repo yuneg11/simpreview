@@ -158,13 +158,12 @@ describe("FileActions", () => {
     );
     expect(container.querySelector(".file-meta")?.textContent).toContain("2 lines");
     expect(container.querySelector(".toggle-source")).toBeNull();
-    const actions = container.textContent ?? "";
-    expect(actions).toContain("Raw");
-    expect(actions).toContain("Copy");
-    expect(actions).toContain("Download");
+    expect(container.textContent).toContain("Raw");
+    expect(container.querySelector('[aria-label="Copy file contents"]')).not.toBeNull();
+    expect(container.querySelector('a[download][aria-label="Download file"]')).not.toBeNull();
   });
 
-  it("omits line meta and Copy for binary files", () => {
+  it("omits line meta and the Copy action for binary files", () => {
     const { container } = render(
       <FileActions
         node={file({
@@ -179,8 +178,8 @@ describe("FileActions", () => {
       />,
     );
     expect(container.querySelector(".file-meta")).toBeNull();
-    expect(container.textContent).not.toContain("Copy");
+    expect(container.querySelector('[aria-label="Copy file contents"]')).toBeNull();
     expect(container.textContent).toContain("Raw");
-    expect(container.textContent).toContain("Download");
+    expect(container.querySelector('a[download][aria-label="Download file"]')).not.toBeNull();
   });
 });

@@ -369,6 +369,12 @@ body {
   background: var(--neutral-hover);
 }
 
+/* Icon-only actions (Copy, Download): square button, no label. */
+.file-action.file-action-icon {
+  padding: 4px;
+  color: var(--fg-muted);
+}
+
 .markdown-body {
   padding: 24px 32px;
 }

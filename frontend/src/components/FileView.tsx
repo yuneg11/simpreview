@@ -1,7 +1,7 @@
 import type { File } from "../api";
 import { countLines, formatSize } from "../format";
 import { highlightSource, isSafeHref, renderMarkdown } from "../render";
-import { CopyIcon, DownloadIcon, LinkIcon } from "../icons";
+import { CopyIcon, DownloadIcon } from "../icons";
 
 function safeRawURL(node: File): string | undefined {
   return node.rawURL && isSafeHref(node.rawURL) ? node.rawURL : undefined;
@@ -46,17 +46,29 @@ export function FileActions({
       )}
       {rawURL && (
         <a class="file-action" href={rawURL} title="View raw">
-          <LinkIcon /> Raw
+          Raw
         </a>
       )}
       {!isBinary && content !== "" && (
-        <button type="button" class="file-action" onClick={copyContent} title="Copy content">
-          <CopyIcon /> Copy
+        <button
+          type="button"
+          class="file-action file-action-icon"
+          onClick={copyContent}
+          title="Copy"
+          aria-label="Copy file contents"
+        >
+          <CopyIcon />
         </button>
       )}
       {rawURL && (
-        <a class="file-action" href={rawURL} download title="Download">
-          <DownloadIcon /> Download
+        <a
+          class="file-action file-action-icon"
+          href={rawURL}
+          download
+          title="Download"
+          aria-label="Download file"
+        >
+          <DownloadIcon />
         </a>
       )}
     </div>
