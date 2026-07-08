@@ -10,6 +10,7 @@ function file(overrides: Partial<File>): File {
     canonicalPath: "/tmp/root/example.txt",
     mime: "text/plain; charset=utf-8",
     renderMode: "text",
+    size: 0,
     content: "",
     ...overrides,
   };
@@ -67,7 +68,7 @@ describe("FileView", () => {
     expect(container.querySelector(".code-body .hljs-keyword")).not.toBeNull();
   });
 
-  it("renders an inline image for image binaries", () => {
+  it("renders a download panel (no inline preview) for binary files, including images", () => {
     const { container } = render(
       <FileView
         node={file({
@@ -76,28 +77,39 @@ describe("FileView", () => {
           renderMode: "binary",
           content: undefined,
           rawURL: "/-/raw/logo.png",
+          size: 2048,
         })}
         showSource={false}
       />,
     );
-    expect(container.querySelector(".binary-view img")?.getAttribute("src")).toBe("/-/raw/logo.png");
+    expect(container.querySelector("img")).toBeNull();
+    expect(container.querySelector(".code-view")).toBeNull();
+    expect(container.querySelector(".binary-view a[download]")?.getAttribute("href")).toBe(
+      "/-/raw/logo.png",
+    );
+    expect(container.textContent?.toLowerCase()).toContain("binary");
   });
 
-  it("shows a download panel for non-image binaries", () => {
+  it("renders a download panel for files too large to preview", () => {
     const { container } = render(
       <FileView
         node={file({
-          path: "data.bin",
-          mime: "application/octet-stream",
-          renderMode: "binary",
+          path: "huge.log",
+          renderMode: "text",
           content: undefined,
-          rawURL: "/-/raw/data.bin",
+          tooLarge: true,
+          rawURL: "/-/raw/huge.log",
+          size: 5_000_000,
         })}
         showSource={false}
       />,
     );
-    expect(container.querySelector(".binary-view img")).toBeNull();
-    expect(container.textContent.toLowerCase()).toContain("binary");
+    expect(container.querySelector(".code-view")).toBeNull();
+    expect(container.querySelector(".file-view.is-code")).toBeNull();
+    expect(container.querySelector(".binary-view a[download]")?.getAttribute("href")).toBe(
+      "/-/raw/huge.log",
+    );
+    expect(container.textContent?.toLowerCase()).toContain("too large");
   });
 });
 
@@ -113,6 +125,7 @@ describe("FileActions", () => {
           mime: "text/markdown; charset=utf-8",
           renderMode: "markdown",
           content: "# Title\n\nHello",
+          size: 13,
           rawURL: "/-/raw/README.md",
         })}
         showSource={false}
@@ -150,6 +163,7 @@ describe("FileActions", () => {
           mime: "text/typescript; charset=utf-8",
           renderMode: "source",
           content: "const x = 1;\nconst y = 2;",
+          size: 25,
           rawURL: "/-/raw/app.ts",
         })}
         showSource={false}
@@ -163,7 +177,7 @@ describe("FileActions", () => {
     expect(container.querySelector('a[download][aria-label="Download file"]')).not.toBeNull();
   });
 
-  it("omits line meta and the Copy action for binary files", () => {
+  it("shows size but no lines/Copy/toggle for binary files", () => {
     const { container } = render(
       <FileActions
         node={file({
@@ -171,15 +185,40 @@ describe("FileActions", () => {
           mime: "image/png",
           renderMode: "binary",
           content: undefined,
+          size: 2048,
           rawURL: "/-/raw/logo.png",
         })}
         showSource={false}
         onToggleSource={() => {}}
       />,
     );
-    expect(container.querySelector(".file-meta")).toBeNull();
+    const meta = container.querySelector(".file-meta")?.textContent ?? "";
+    expect(meta).toContain("2 KB");
+    expect(meta).not.toContain("lines");
+    expect(container.querySelector(".toggle-source")).toBeNull();
     expect(container.querySelector('[aria-label="Copy file contents"]')).toBeNull();
     expect(container.textContent).toContain("Raw");
+    expect(container.querySelector('a[download][aria-label="Download file"]')).not.toBeNull();
+  });
+
+  it("shows size but no lines/Copy for too-large files", () => {
+    const { container } = render(
+      <FileActions
+        node={file({
+          path: "huge.log",
+          renderMode: "text",
+          content: undefined,
+          tooLarge: true,
+          size: 5_000_000,
+          rawURL: "/-/raw/huge.log",
+        })}
+        showSource={false}
+        onToggleSource={() => {}}
+      />,
+    );
+    const meta = container.querySelector(".file-meta")?.textContent ?? "";
+    expect(meta).not.toContain("lines");
+    expect(container.querySelector('[aria-label="Copy file contents"]')).toBeNull();
     expect(container.querySelector('a[download][aria-label="Download file"]')).not.toBeNull();
   });
 });

@@ -42,8 +42,10 @@ type File struct {
 	CanonicalPath string     `json:"canonicalPath"`
 	MIME          string     `json:"mime"`
 	RenderMode    RenderMode `json:"renderMode"`
+	Size          int64      `json:"size"`
 	Content       string     `json:"content,omitempty"`
 	RawURL        string     `json:"rawURL,omitempty"`
+	TooLarge      bool       `json:"tooLarge,omitempty"`
 }
 
 type RawFile struct {
@@ -142,28 +144,37 @@ func (s *Store) ReadPreview(rawPath string) (File, error) {
 	}
 	defer file.Close()
 
+	name := displayName(resolved)
+	result := File{
+		Kind:          "file",
+		Path:          resolved.RelPath,
+		CanonicalPath: resolved.AbsPath,
+		Size:          info.Size(),
+	}
+	if !tooLarge(info.Size(), s.policy.MaxRawFileSize) {
+		result.RawURL = rawURLForPath(resolved.RelPath)
+	}
+
+	// A file too large to inline is returned as a download-only node (with its
+	// rawURL) instead of an error, so the client can still offer the raw file.
 	if tooLarge(info.Size(), s.policy.MaxPreviewSize) {
-		return File{}, AppError{Code: CodeTooLarge, Message: "file exceeds preview size limit"}
+		sample, err := readRawSample(file, info.Size())
+		if err != nil {
+			return File{}, AppError{Code: CodeInternal, Message: "failed to read file sample"}
+		}
+		result.RenderMode, result.MIME = DetectRenderMode(name, sample)
+		result.TooLarge = true
+		return result, nil
 	}
 
 	content, err := readPreviewBytes(file, s.policy.MaxPreviewSize)
 	if err != nil {
 		return File{}, err
 	}
+	result.RenderMode, result.MIME = DetectRenderMode(name, sampleBytes(content))
 
-	name := displayName(resolved)
-	renderMode, mimeType := DetectRenderMode(name, sampleBytes(content))
-	result := File{
-		Kind:          "file",
-		Path:          resolved.RelPath,
-		CanonicalPath: resolved.AbsPath,
-		MIME:          mimeType,
-		RenderMode:    renderMode,
-	}
-	if !tooLarge(info.Size(), s.policy.MaxRawFileSize) {
-		result.RawURL = rawURLForPath(resolved.RelPath)
-	}
-	if renderMode == RenderModeBinary {
+	// Binary files are never inlined; the client downloads them via rawURL.
+	if result.RenderMode == RenderModeBinary {
 		return result, nil
 	}
 

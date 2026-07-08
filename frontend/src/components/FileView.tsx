@@ -23,9 +23,9 @@ export function FileActions({
 }) {
   const content = node.content ?? "";
   const isMarkdown = node.renderMode === "markdown";
-  const isBinary = node.renderMode === "binary";
-  const bytes = new TextEncoder().encode(content).length;
-  const lineCount = countLines(content);
+  // Binary and too-large files have no inline content: show only the size and
+  // the download actions, never line count / Copy / the Code toggle.
+  const previewable = !node.tooLarge && node.renderMode !== "binary";
   const rawURL = safeRawURL(node);
 
   function copyContent() {
@@ -34,12 +34,15 @@ export function FileActions({
 
   return (
     <div class="file-actions">
-      {!isBinary && (
-        <span class="file-meta">
-          {lineCount} lines <span class="dot">·</span> {formatSize(bytes)}
-        </span>
-      )}
-      {isMarkdown && (
+      <span class="file-meta">
+        {previewable && (
+          <>
+            {countLines(content)} lines <span class="dot">·</span>{" "}
+          </>
+        )}
+        {formatSize(node.size)}
+      </span>
+      {previewable && isMarkdown && (
         <button type="button" class="toggle-source" onClick={onToggleSource}>
           {showSource ? "Preview" : "Code"}
         </button>
@@ -49,7 +52,7 @@ export function FileActions({
           Raw
         </a>
       )}
-      {!isBinary && content !== "" && (
+      {previewable && content !== "" && (
         <button
           type="button"
           class="file-action file-action-icon"
@@ -78,11 +81,13 @@ export function FileActions({
 export function FileView({ node, showSource }: { node: File; showSource: boolean }) {
   // A code display (line-number gutter) fills the full content area and scrolls
   // internally, so the gutter divider reaches the bottom and the horizontal
-  // scrollbar stays pinned to the bottom of the viewport.
+  // scrollbar stays pinned to the bottom of the viewport. Binary and too-large
+  // files render a download panel instead, so they are not "code".
   const isCode =
-    node.renderMode === "source" ||
-    node.renderMode === "text" ||
-    (node.renderMode === "markdown" && showSource);
+    !node.tooLarge &&
+    (node.renderMode === "source" ||
+      node.renderMode === "text" ||
+      (node.renderMode === "markdown" && showSource));
   return (
     <div class={`file-view render-${node.renderMode}${isCode ? " is-code" : ""}`}>
       <FileBody
@@ -106,11 +111,19 @@ function FileBody({
   showSource: boolean;
   rawURL?: string;
 }) {
-  if (node.renderMode === "markdown" && !showSource) {
-    return <article class="markdown-body" dangerouslySetInnerHTML={{ __html: renderMarkdown(content) }} />;
+  if (node.tooLarge) {
+    return <DownloadPanel message="This file is too large to preview." rawURL={rawURL} />;
   }
   if (node.renderMode === "binary") {
-    return <BinaryView node={node} rawURL={rawURL} />;
+    return (
+      <DownloadPanel
+        message="This is a binary file and can't be previewed."
+        rawURL={rawURL}
+      />
+    );
+  }
+  if (node.renderMode === "markdown" && !showSource) {
+    return <article class="markdown-body" dangerouslySetInnerHTML={{ __html: renderMarkdown(content) }} />;
   }
   return <CodeView content={content} file={node} />;
 }
@@ -139,18 +152,14 @@ function CodeView({ content, file }: { content: string; file: File }) {
   );
 }
 
-function BinaryView({ node, rawURL }: { node: File; rawURL?: string }) {
-  const isImage = node.mime.startsWith("image/");
-  if (isImage && rawURL) {
-    return (
-      <div class="binary-view">
-        <img src={rawURL} alt={node.path} />
-      </div>
-    );
-  }
+/**
+ * Download-only panel for files that are never previewed inline: binary files
+ * (any type, including images) and files too large to preview.
+ */
+function DownloadPanel({ message, rawURL }: { message: string; rawURL?: string }) {
   return (
     <div class="binary-view">
-      <p>Binary file — preview is not available.</p>
+      <p>{message}</p>
       {rawURL && (
         <a class="file-action" href={rawURL} download>
           <DownloadIcon /> Download

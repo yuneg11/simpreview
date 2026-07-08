@@ -11,6 +11,7 @@ function markdownFile(content: string): File {
     canonicalPath: "/tmp/root/README.md",
     mime: "text/markdown; charset=utf-8",
     renderMode: "markdown",
+    size: content.length,
     content,
     rawURL: "/-/raw/README.md",
   };

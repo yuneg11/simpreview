@@ -104,14 +104,26 @@ func TestListHandlesDecodedPercentNames(t *testing.T) {
 	}
 }
 
-func TestReadPreviewEnforcesSizeLimit(t *testing.T) {
+func TestReadPreviewReturnsDownloadNodeWhenTooLarge(t *testing.T) {
 	root := t.TempDir()
 	writeFile(t, filepath.Join(root, "large.txt"), "abcd")
-	store := newTestStore(t, Policy{Root: root, MaxPreviewSize: 3})
+	store := newTestStore(t, Policy{Root: root, MaxPreviewSize: 3, MaxRawFileSize: 1024})
 
-	_, err := store.ReadPreview("large.txt")
-	if Status(err) != http.StatusRequestEntityTooLarge {
-		t.Fatalf("ReadPreview() status = %d, want %d (err=%v)", Status(err), http.StatusRequestEntityTooLarge, err)
+	got, err := store.ReadPreview("large.txt")
+	if err != nil {
+		t.Fatalf("ReadPreview() error = %v", err)
+	}
+	if !got.TooLarge {
+		t.Fatalf("TooLarge = false, want true for oversized preview")
+	}
+	if got.Content != "" {
+		t.Fatalf("Content = %q, want empty content for too-large preview", got.Content)
+	}
+	if got.RawURL != "/-/raw/large.txt" {
+		t.Fatalf("RawURL = %q, want /-/raw/large.txt", got.RawURL)
+	}
+	if got.Size != 4 {
+		t.Fatalf("Size = %d, want 4", got.Size)
 	}
 }
 

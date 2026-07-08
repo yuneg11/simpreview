@@ -25,8 +25,10 @@ export interface File {
   canonicalPath: string;
   mime: string;
   renderMode: RenderMode;
+  size: number;
   content?: string;
   rawURL?: string;
+  tooLarge?: boolean;
 }
 
 export type Node = Directory | File;

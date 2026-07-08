@@ -10,6 +10,7 @@ function file(overrides: Partial<File>): File {
     canonicalPath: "/tmp/root/example.txt",
     mime: "text/plain; charset=utf-8",
     renderMode: "text",
+    size: 0,
     content: "",
     ...overrides,
   };
