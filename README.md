@@ -75,13 +75,43 @@ The intended threat model is a **trusted document root** browsed by trusted
 users — not a root where untrusted parties can rewrite files while the server
 reads them.
 
-## How it works
+## Architecture
 
-- **Backend** (Go, standard library): owns filesystem policy, serves the
-  `/-/api/fs/*` JSON contract and `/-/raw/*` file bytes, and embeds the built
-  frontend via `go:embed`.
+- **Backend** (Go, standard library): owns filesystem policy, serves the JSON
+  data contract and raw file bytes, and embeds the built frontend via `go:embed`
+  so everything ships as one binary.
 - **Frontend** (Preact + TypeScript + Vite): a SPA that renders entirely from
   the JSON contract (markdown-it, DOMPurify, highlight.js, github-markdown-css).
+
+### Project structure
+
+```text
+backend/             Go server (single binary)
+  cmd/preview/        CLI entry point
+  internal/config/    CLI flags
+  internal/files/     path policy, MIME + render-mode detection, file reads
+  internal/server/    HTTP handlers
+  internal/assets/    embedded frontend (web/); only the minimal index.html is tracked
+frontend/            Preact + TypeScript + Vite SPA
+  src/                components, signals store, routing/format/render helpers, api client
+```
+
+### Data contract
+
+`GET /-/api/fs/*` returns JSON — the single source of truth the frontend renders
+from:
+
+- **directory**: `{ kind: "directory", path, entries[], truncated }`
+- **file**: `{ kind: "file", path, mime, renderMode, size, content?, rawURL?, tooLarge? }`
+- **error**: `{ error: { code, message } }` with a matching HTTP status.
+
+`renderMode` is one of `markdown | source | text | image | binary`. Binary vs.
+text is decided by file **content**, not extension. Raster images and SVG use
+`image` and preview via `rawURL` (SVG also carries `content` for a source view);
+non-image binaries and text over `--max-preview-size` return a download node.
+
+`GET /-/raw/*` streams raw file bytes (downloads and `<img>` sources), under its
+own larger size limit.
 
 ## Development
 
@@ -94,8 +124,6 @@ task typecheck  # frontend type-check
 task build      # build the frontend and embed it into the Go binary
 task serve      # build, then run the server (task serve -- --root /path)
 ```
-
-See [AGENTS.md](AGENTS.md) for the architecture, conventions, and data contract.
 
 ## License
 
