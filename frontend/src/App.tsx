@@ -34,20 +34,22 @@ export function App() {
             tree={tree.value}
             currentPath={currentPath.value}
             onToggle={toggleFolder}
+            onCollapse={() => setSidebarOpen(false)}
           />
         )}
         <main class="content-pane">
           <div class="content-header">
-            <button
-              type="button"
-              class="sidebar-toggle"
-              aria-label={sidebarOpen ? "Hide file tree" : "Show file tree"}
-              aria-pressed={sidebarOpen}
-              title={sidebarOpen ? "Hide file tree" : "Show file tree"}
-              onClick={() => setSidebarOpen((open) => !open)}
-            >
-              <SidebarIcon />
-            </button>
+            {!sidebarOpen && (
+              <button
+                type="button"
+                class="sidebar-toggle"
+                aria-label="Show file tree"
+                title="Show file tree"
+                onClick={() => setSidebarOpen(true)}
+              >
+                <SidebarIcon />
+              </button>
+            )}
             <Breadcrumb path={currentPath.value} />
             {fileNode && (
               <FileActions

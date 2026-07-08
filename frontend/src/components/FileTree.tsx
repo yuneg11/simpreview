@@ -1,7 +1,7 @@
 import type { Entry } from "../api";
 import type { FolderState } from "../state";
 import { documentHrefForPath } from "../routing";
-import { ChevronIcon, FileIcon, FolderIcon } from "../icons";
+import { ChevronIcon, FileIcon, FolderIcon, SidebarIcon } from "../icons";
 
 interface TreeProps {
   tree: Map<string, FolderState>;
@@ -9,10 +9,28 @@ interface TreeProps {
   onToggle: (path: string) => void;
 }
 
-export function FileTree({ tree, currentPath, onToggle }: TreeProps) {
+export function FileTree({
+  tree,
+  currentPath,
+  onToggle,
+  onCollapse,
+}: TreeProps & { onCollapse?: () => void }) {
   return (
     <aside class="file-tree" aria-label="Files">
-      <div class="file-tree-header">Files</div>
+      <div class="file-tree-header">
+        <span>Files</span>
+        {onCollapse && (
+          <button
+            type="button"
+            class="sidebar-toggle"
+            aria-label="Hide file tree"
+            title="Hide file tree"
+            onClick={onCollapse}
+          >
+            <SidebarIcon />
+          </button>
+        )}
+      </div>
       <nav class="file-tree-body">
         <TreeLevel parentPath="" depth={0} tree={tree} currentPath={currentPath} onToggle={onToggle} />
       </nav>

@@ -58,7 +58,11 @@ body {
 }
 
 .file-tree-header {
-  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px 12px 10px 16px;
   font-weight: 600;
   border-bottom: 1px solid var(--border);
   position: sticky;
@@ -363,11 +367,15 @@ body {
   overflow: visible;
 }
 
-.code-body code {
+/* Higher specificity than highlight.js's `pre code.hljs { padding: 1em }`,
+   which otherwise adds top padding to the code but not the gutter and pushes
+   the code lines out of alignment with the line numbers. */
+.code-view .code-body code {
   display: block;
   padding: 0 16px;
   white-space: pre;
-  background: none;
+  background: transparent;
+  overflow: visible;
 }
 
 /* Status views ------------------------------------------------------------- */

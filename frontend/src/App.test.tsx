@@ -72,14 +72,18 @@ describe("App", () => {
     expect(container.querySelector(".status-view.is-error")).not.toBeNull();
   });
 
-  it("toggles the file tree sidebar open and closed", () => {
+  it("moves the sidebar toggle between the Files header and the breadcrumb row", () => {
     view.value = { status: "loading", path: "" };
     const { container } = render(<App />);
-    expect(container.querySelector(".file-tree")).not.toBeNull();
-    fireEvent.click(container.querySelector(".sidebar-toggle") as Element);
+    // Open: the toggle lives at the right of the Files header, not the content row.
+    expect(container.querySelector(".file-tree-header .sidebar-toggle")).not.toBeNull();
+    expect(container.querySelector(".content-header .sidebar-toggle")).toBeNull();
+    fireEvent.click(container.querySelector(".file-tree-header .sidebar-toggle") as Element);
+    // Collapsed: tree gone, toggle now at the left of the content header.
     expect(container.querySelector(".file-tree")).toBeNull();
     expect(container.querySelector(".app-body.is-collapsed")).not.toBeNull();
-    fireEvent.click(container.querySelector(".sidebar-toggle") as Element);
+    expect(container.querySelector(".content-header .sidebar-toggle")).not.toBeNull();
+    fireEvent.click(container.querySelector(".content-header .sidebar-toggle") as Element);
     expect(container.querySelector(".file-tree")).not.toBeNull();
   });
 
