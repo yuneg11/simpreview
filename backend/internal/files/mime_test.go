@@ -20,6 +20,13 @@ func TestDetectRenderMode(t *testing.T) {
 		{name: "index.html", sample: []byte("<!doctype html><title>x</title>"), wantMode: RenderModeSource, wantMIME: "text/html"},
 		{name: "diagram.svg", sample: []byte(`<svg xmlns="http://www.w3.org/2000/svg"></svg>`), wantMode: RenderModeSource, wantMIME: "image/svg+xml"},
 		{name: "script.js", sample: []byte("console.log('x');\n"), wantMode: RenderModeSource, wantMIME: "text/javascript"},
+		// Regression: ".mod" maps to audio/x-mod in the system mime database, but
+		// go.mod is plain text and must not be classified as binary.
+		{name: "go.mod", sample: []byte("module preview/backend\n\ngo 1.22\n"), wantMode: RenderModeText, wantMIME: "text/plain"},
+		// Extension-less text file: classified as text from its content.
+		{name: "Dockerfile", sample: []byte("FROM alpine:3\nRUN echo hi\n"), wantMode: RenderModeText, wantMIME: "text/plain"},
+		// Binary content under an unknown extension: NUL byte marks it binary.
+		{name: "blob", sample: []byte{0x00, 0x01, 0x02, 0x03, 0x04, 0x00}, wantMode: RenderModeBinary, wantMIME: "application/octet-stream"},
 	}
 
 	for _, tt := range tests {

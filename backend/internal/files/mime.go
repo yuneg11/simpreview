@@ -1,6 +1,7 @@
 package files
 
 import (
+	"bytes"
 	stdmime "mime"
 	"net/http"
 	"path/filepath"
@@ -60,6 +61,14 @@ func DetectRenderMode(name string, sample []byte) (RenderMode, string) {
 		mimeType = http.DetectContentType(sample)
 	}
 
+	// Binary vs. text is decided by the file's bytes, not its extension, so that
+	// plain-text files with unusual or wrongly-mapped extensions still render as
+	// text. For example, the system mime database reports ".mod" (go.mod) as
+	// audio/x-mod, but its content is plain text.
+	if looksBinary(sample) {
+		return RenderModeBinary, mimeType
+	}
+
 	if _, ok := markdownExtensions[ext]; ok {
 		return RenderModeMarkdown, mimeType
 	}
@@ -69,10 +78,27 @@ func DetectRenderMode(name string, sample []byte) (RenderMode, string) {
 	if _, ok := textExtensions[ext]; ok {
 		return RenderModeText, mimeType
 	}
-	if strings.HasPrefix(baseMIMEType(mimeType), "text/") {
-		return RenderModeText, mimeType
+	// Non-binary content with an unknown extension renders as plain text. If the
+	// extension resolved to a non-text MIME, correct it so the reported type
+	// matches how the content is served.
+	if !strings.HasPrefix(baseMIMEType(mimeType), "text/") {
+		mimeType = "text/plain; charset=utf-8"
 	}
-	return RenderModeBinary, mimeType
+	return RenderModeText, mimeType
+}
+
+// looksBinary reports whether a leading sample of a file appears to be binary
+// rather than displayable text. It uses the classic NUL-byte heuristic (git's
+// signal for binary content) plus the standard library's own text/binary
+// content sniff. An empty sample is treated as text.
+func looksBinary(sample []byte) bool {
+	if len(sample) == 0 {
+		return false
+	}
+	if bytes.IndexByte(sample, 0x00) >= 0 {
+		return true
+	}
+	return !strings.HasPrefix(baseMIMEType(http.DetectContentType(sample)), "text/")
 }
 
 func DetectRawMIME(name string, sample []byte) string {
