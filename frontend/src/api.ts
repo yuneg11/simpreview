@@ -1,6 +1,6 @@
 export type EntryKind = "directory" | "file" | "symlink" | "other";
 
-export type RenderMode = "markdown" | "source" | "text" | "binary";
+export type RenderMode = "markdown" | "source" | "text" | "image" | "binary";
 
 export interface Entry {
   name: string;

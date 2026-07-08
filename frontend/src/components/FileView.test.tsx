@@ -68,15 +68,56 @@ describe("FileView", () => {
     expect(container.querySelector(".code-body .hljs-keyword")).not.toBeNull();
   });
 
-  it("renders a download panel (no inline preview) for binary files, including images", () => {
+  it("previews a raster image inline via its raw URL", () => {
     const { container } = render(
       <FileView
         node={file({
           path: "logo.png",
           mime: "image/png",
-          renderMode: "binary",
+          renderMode: "image",
           content: undefined,
           rawURL: "/-/raw/logo.png",
+          size: 2048,
+        })}
+        showSource={false}
+      />,
+    );
+    expect(container.querySelector(".image-view img")?.getAttribute("src")).toBe(
+      "/-/raw/logo.png",
+    );
+    expect(container.querySelector(".code-view")).toBeNull();
+  });
+
+  it("shows an SVG as an image by default and switches to source on toggle", () => {
+    const svg = file({
+      path: "icon.svg",
+      mime: "image/svg+xml",
+      renderMode: "image",
+      content: '<svg xmlns="http://www.w3.org/2000/svg"><rect/></svg>',
+      rawURL: "/-/raw/icon.svg",
+      size: 48,
+    });
+    const preview = render(<FileView node={svg} showSource={false} />);
+    expect(preview.container.querySelector(".image-view img")?.getAttribute("src")).toBe(
+      "/-/raw/icon.svg",
+    );
+    expect(preview.container.querySelector(".code-view")).toBeNull();
+    cleanup();
+    const source = render(<FileView node={svg} showSource={true} />);
+    expect(source.container.querySelector(".image-view")).toBeNull();
+    expect(source.container.querySelector(".code-view")).not.toBeNull();
+    expect(source.container.querySelector(".file-view.is-code")).not.toBeNull();
+  });
+
+  it("renders a download panel for non-image binary files", () => {
+    const { container } = render(
+      <FileView
+        node={file({
+          path: "data.bin",
+          mime: "application/octet-stream",
+          renderMode: "binary",
+          content: undefined,
+          rawURL: "/-/raw/data.bin",
           size: 2048,
         })}
         showSource={false}
@@ -85,7 +126,7 @@ describe("FileView", () => {
     expect(container.querySelector("img")).toBeNull();
     expect(container.querySelector(".code-view")).toBeNull();
     expect(container.querySelector(".binary-view a[download]")?.getAttribute("href")).toBe(
-      "/-/raw/logo.png",
+      "/-/raw/data.bin",
     );
     expect(container.textContent?.toLowerCase()).toContain("binary");
   });
@@ -199,6 +240,51 @@ describe("FileActions", () => {
     expect(container.querySelector('[aria-label="Copy file contents"]')).toBeNull();
     expect(container.textContent).toContain("Raw");
     expect(container.querySelector('a[download][aria-label="Download file"]')).not.toBeNull();
+  });
+
+  it("shows size + Raw/Download but no lines/Copy/toggle for a raster image", () => {
+    const { container } = render(
+      <FileActions
+        node={file({
+          path: "logo.png",
+          mime: "image/png",
+          renderMode: "image",
+          content: undefined,
+          size: 2048,
+          rawURL: "/-/raw/logo.png",
+        })}
+        showSource={false}
+        onToggleSource={() => {}}
+      />,
+    );
+    const meta = container.querySelector(".file-meta")?.textContent ?? "";
+    expect(meta).toContain("2 KB");
+    expect(meta).not.toContain("lines");
+    expect(container.querySelector(".toggle-source")).toBeNull();
+    expect(container.querySelector('[aria-label="Copy file contents"]')).toBeNull();
+    expect(container.querySelector('a[download][aria-label="Download file"]')).not.toBeNull();
+  });
+
+  it("gives an SVG a Code toggle + Copy + line count (has source)", () => {
+    const svg = file({
+      path: "icon.svg",
+      mime: "image/svg+xml",
+      renderMode: "image",
+      content: "<svg>\n<rect/>\n</svg>",
+      size: 20,
+      rawURL: "/-/raw/icon.svg",
+    });
+    const image = render(
+      <FileActions node={svg} showSource={false} onToggleSource={() => {}} />,
+    );
+    expect(image.container.querySelector(".toggle-source")?.textContent).toBe("Code");
+    expect(image.container.querySelector('[aria-label="Copy file contents"]')).not.toBeNull();
+    expect(image.container.querySelector(".file-meta")?.textContent).toContain("3 lines");
+    cleanup();
+    const source = render(
+      <FileActions node={svg} showSource={true} onToggleSource={() => {}} />,
+    );
+    expect(source.container.querySelector(".toggle-source")?.textContent).toBe("Preview");
   });
 
   it("shows size but no lines/Copy for too-large files", () => {

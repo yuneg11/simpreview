@@ -227,30 +227,54 @@ func TestReadPreviewEscapesRawURLPerPathSegment(t *testing.T) {
 	}
 }
 
-func TestReadPreviewReturnsBinaryMetadataWithoutContent(t *testing.T) {
+func TestReadPreviewReturnsImageMetadataWithoutContent(t *testing.T) {
 	root := t.TempDir()
 	writeBytes(t, filepath.Join(root, "image.png"), testPNGBytes())
-	store := newTestStore(t, Policy{Root: root, MaxPreviewSize: 1024})
+	store := newTestStore(t, Policy{Root: root, MaxPreviewSize: 1024, MaxRawFileSize: 1024})
 
 	got, err := store.ReadPreview("image.png")
 	if err != nil {
 		t.Fatalf("ReadPreview() error = %v", err)
 	}
-	if got.RenderMode != RenderModeBinary {
-		t.Fatalf("RenderMode = %q, want %q", got.RenderMode, RenderModeBinary)
+	if got.RenderMode != RenderModeImage {
+		t.Fatalf("RenderMode = %q, want %q", got.RenderMode, RenderModeImage)
 	}
 	if base := baseMediaType(t, got.MIME); base != "image/png" {
 		t.Fatalf("MIME = %q, want image/png", got.MIME)
 	}
 	if got.Content != "" {
-		t.Fatalf("Content = %q, want empty content for binary preview", got.Content)
+		t.Fatalf("Content = %q, want empty content for a raster image", got.Content)
+	}
+	if got.RawURL != "/-/raw/image.png" {
+		t.Fatalf("RawURL = %q, want /-/raw/image.png", got.RawURL)
 	}
 	body, err := json.Marshal(got)
 	if err != nil {
 		t.Fatalf("Marshal() error = %v", err)
 	}
 	if containsJSONField(body, "content") {
-		t.Fatalf("marshaled binary preview included content field: %s", body)
+		t.Fatalf("marshaled image preview included content field: %s", body)
+	}
+}
+
+func TestReadPreviewReturnsSVGWithSource(t *testing.T) {
+	root := t.TempDir()
+	svg := `<svg xmlns="http://www.w3.org/2000/svg"><rect/></svg>`
+	writeFile(t, filepath.Join(root, "icon.svg"), svg)
+	store := newTestStore(t, Policy{Root: root, MaxPreviewSize: 1024, MaxRawFileSize: 1024})
+
+	got, err := store.ReadPreview("icon.svg")
+	if err != nil {
+		t.Fatalf("ReadPreview() error = %v", err)
+	}
+	if got.RenderMode != RenderModeImage {
+		t.Fatalf("RenderMode = %q, want %q", got.RenderMode, RenderModeImage)
+	}
+	if got.Content != svg {
+		t.Fatalf("Content = %q, want the SVG source", got.Content)
+	}
+	if got.RawURL != "/-/raw/icon.svg" {
+		t.Fatalf("RawURL = %q, want /-/raw/icon.svg", got.RawURL)
 	}
 }
 

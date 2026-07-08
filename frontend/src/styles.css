@@ -445,14 +445,21 @@ body {
   font-size: 12px;
 }
 
-/* Binary view -------------------------------------------------------------- */
+/* Binary / download view --------------------------------------------------- */
 .binary-view {
   padding: 32px;
   text-align: center;
   color: var(--fg-muted);
 }
 
-.binary-view img {
+/* Image preview ------------------------------------------------------------ */
+.image-view {
+  display: flex;
+  justify-content: center;
+  padding: 24px;
+}
+
+.image-view img {
   max-width: 100%;
   height: auto;
 }

@@ -166,6 +166,7 @@ function languageForPath(path: string): string | undefined {
     rb: "ruby",
     rs: "rust",
     sh: "bash",
+    svg: "xml",
     ts: "typescript",
     tsx: "typescript",
     txt: "plaintext",

@@ -155,14 +155,18 @@ func (s *Store) ReadPreview(rawPath string) (File, error) {
 		result.RawURL = rawURLForPath(resolved.RelPath)
 	}
 
-	// A file too large to inline is returned as a download-only node (with its
-	// rawURL) instead of an error, so the client can still offer the raw file.
+	// Files too large to inline are handled from a sample: images still preview
+	// via their raw URL, while other content becomes a download-only node
+	// instead of an error.
 	if tooLarge(info.Size(), s.policy.MaxPreviewSize) {
 		sample, err := readRawSample(file, info.Size())
 		if err != nil {
 			return File{}, AppError{Code: CodeInternal, Message: "failed to read file sample"}
 		}
 		result.RenderMode, result.MIME = DetectRenderMode(name, sample)
+		if result.RenderMode == RenderModeImage {
+			return result, nil
+		}
 		result.TooLarge = true
 		return result, nil
 	}
@@ -171,14 +175,14 @@ func (s *Store) ReadPreview(rawPath string) (File, error) {
 	if err != nil {
 		return File{}, err
 	}
-	result.RenderMode, result.MIME = DetectRenderMode(name, sampleBytes(content))
+	sample := sampleBytes(content)
+	result.RenderMode, result.MIME = DetectRenderMode(name, sample)
 
-	// Binary files are never inlined; the client downloads them via rawURL.
-	if result.RenderMode == RenderModeBinary {
-		return result, nil
+	// Inline content only for textual files. Binary content and raster images
+	// carry no content; the client uses rawURL to download or preview them.
+	if !looksBinary(sample) {
+		result.Content = string(content)
 	}
-
-	result.Content = string(content)
 	return result, nil
 }
 

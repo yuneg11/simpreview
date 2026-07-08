@@ -16,9 +16,10 @@ func TestDetectRenderMode(t *testing.T) {
 		{name: "main.go", sample: []byte("package main\n"), wantMode: RenderModeSource, wantMIME: "text/plain"},
 		{name: "app.py", sample: []byte("print('hello')\n"), wantMode: RenderModeSource, wantMIME: "text/plain"},
 		{name: "notes.txt", sample: []byte("plain notes\n"), wantMode: RenderModeText, wantMIME: "text/plain"},
-		{name: "image.png", sample: testPNGBytes(), wantMode: RenderModeBinary, wantMIME: "image/png"},
+		{name: "image.png", sample: testPNGBytes(), wantMode: RenderModeImage, wantMIME: "image/png"},
 		{name: "index.html", sample: []byte("<!doctype html><title>x</title>"), wantMode: RenderModeSource, wantMIME: "text/html"},
-		{name: "diagram.svg", sample: []byte(`<svg xmlns="http://www.w3.org/2000/svg"></svg>`), wantMode: RenderModeSource, wantMIME: "image/svg+xml"},
+		// SVG is textual but renders as an image (with a source view available).
+		{name: "diagram.svg", sample: []byte(`<svg xmlns="http://www.w3.org/2000/svg"></svg>`), wantMode: RenderModeImage, wantMIME: "image/svg+xml"},
 		{name: "script.js", sample: []byte("console.log('x');\n"), wantMode: RenderModeSource, wantMIME: "text/javascript"},
 		// Regression: ".mod" maps to audio/x-mod in the system mime database, but
 		// go.mod is plain text and must not be classified as binary.

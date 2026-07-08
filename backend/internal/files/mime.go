@@ -14,6 +14,7 @@ const (
 	RenderModeMarkdown RenderMode = "markdown"
 	RenderModeSource   RenderMode = "source"
 	RenderModeText     RenderMode = "text"
+	RenderModeImage    RenderMode = "image"
 	RenderModeBinary   RenderMode = "binary"
 )
 
@@ -60,15 +61,26 @@ func DetectRenderMode(name string, sample []byte) (RenderMode, string) {
 	if mimeType == "" {
 		mimeType = http.DetectContentType(sample)
 	}
+	base := baseMIMEType(mimeType)
 
 	// Binary vs. text is decided by the file's bytes, not its extension, so that
 	// plain-text files with unusual or wrongly-mapped extensions still render as
 	// text. For example, the system mime database reports ".mod" (go.mod) as
 	// audio/x-mod, but its content is plain text.
 	if looksBinary(sample) {
+		// Raster images are previewed inline via their raw URL; other binary
+		// content is download-only.
+		if isRasterImageMIME(base) {
+			return RenderModeImage, mimeType
+		}
 		return RenderModeBinary, mimeType
 	}
 
+	// SVG is textual (XML) but also renders as an image, so it is served as an
+	// image with an available source view.
+	if ext == ".svg" || base == "image/svg+xml" {
+		return RenderModeImage, mimeType
+	}
 	if _, ok := markdownExtensions[ext]; ok {
 		return RenderModeMarkdown, mimeType
 	}
@@ -81,10 +93,29 @@ func DetectRenderMode(name string, sample []byte) (RenderMode, string) {
 	// Non-binary content with an unknown extension renders as plain text. If the
 	// extension resolved to a non-text MIME, correct it so the reported type
 	// matches how the content is served.
-	if !strings.HasPrefix(baseMIMEType(mimeType), "text/") {
+	if !strings.HasPrefix(base, "text/") {
 		mimeType = "text/plain; charset=utf-8"
 	}
 	return RenderModeText, mimeType
+}
+
+// isRasterImageMIME reports whether a MIME base type is a raster image that
+// browsers can display in an <img> element.
+func isRasterImageMIME(base string) bool {
+	switch base {
+	case "image/png",
+		"image/jpeg",
+		"image/gif",
+		"image/webp",
+		"image/avif",
+		"image/bmp",
+		"image/apng",
+		"image/x-icon",
+		"image/vnd.microsoft.icon":
+		return true
+	default:
+		return false
+	}
 }
 
 // looksBinary reports whether a leading sample of a file appears to be binary
